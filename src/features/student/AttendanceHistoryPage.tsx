@@ -16,8 +16,8 @@ const statusConfig: Record<AttendanceStatus, { label: string; icon: React.ReactN
         icon: <XCircle size={16} />,
         className: 'bg-status-error/20 text-status-error border-status-error/30',
     },
-    LATE: {
-        label: 'Late',
+    PARTIALLY_PRESENT: {
+        label: 'Partial',
         icon: <AlertCircle size={16} />,
         className: 'bg-status-warning/20 text-status-warning border-status-warning/30',
     },
@@ -70,9 +70,9 @@ export const AttendanceHistoryPage: React.FC = () => {
 
     const presentCount = records.filter((r) => r.status === 'PRESENT').length;
     const absentCount = records.filter((r) => r.status === 'ABSENT').length;
-    const lateCount = records.filter((r) => r.status === 'LATE').length;
+    const partialCount = records.filter((r) => r.status === 'PARTIALLY_PRESENT').length;
     const attendanceRate = records.length > 0
-        ? Math.round(((presentCount + lateCount) / records.length) * 100)
+        ? Math.round(((presentCount + partialCount) / records.length) * 100)
         : 0;
 
     return (
@@ -97,7 +97,7 @@ export const AttendanceHistoryPage: React.FC = () => {
                     </div>
                     <div className="bg-background-card rounded-xl border border-white/5 p-4">
                         <p className="text-text-muted text-sm mb-1">Late</p>
-                        <p className="text-2xl font-bold text-status-warning">{lateCount}</p>
+                        <p className="text-2xl font-bold text-status-warning">{partialCount}</p>
                     </div>
                     <div className="bg-background-card rounded-xl border border-white/5 p-4">
                         <p className="text-text-muted text-sm mb-1">Absent</p>
@@ -115,7 +115,7 @@ export const AttendanceHistoryPage: React.FC = () => {
                     >
                         <option value="">All Records</option>
                         <option value="PRESENT">Present Only</option>
-                        <option value="LATE">Late Only</option>
+                        <option value="PARTIALLY_PRESENT">Partial Only</option>
                         <option value="ABSENT">Absent Only</option>
                     </select>
                 </div>

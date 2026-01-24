@@ -51,18 +51,18 @@ export interface AttendanceEntry {
     studentId: number;
     studentName: string;
     studentEmail: string;
-    status: 'PRESENT' | 'ABSENT' | 'LATE';
+    status: 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
     joinedAt?: string;
     leftAt?: string;
 }
 
 export interface AttendanceReport {
-    meetingId: number;
+    meetingId: string;
     meetingTitle: string;
     totalStudents: number;
     presentCount: number;
     absentCount: number;
-    lateCount: number;
+    partialCount: number;
     entries: AttendanceEntry[];
 }
 

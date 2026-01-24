@@ -6,10 +6,10 @@ interface ApiResponse<T> {
     data: T;
 }
 
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE';
+export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
 
 export interface AttendanceRecord {
-    meetingId: number;
+    meetingId: string;
     meetingTitle: string;
     lecturerName: string;
     scheduledStartTime: string;

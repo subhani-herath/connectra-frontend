@@ -25,8 +25,8 @@ const statusConfig: Record<AttendanceEntry['status'], { label: string; icon: Rea
         icon: <XCircle size={14} />,
         className: 'text-status-error bg-status-error/20',
     },
-    LATE: {
-        label: 'Late',
+    PARTIALLY_PRESENT: {
+        label: 'Partial',
         icon: <AlertCircle size={14} />,
         className: 'text-status-warning bg-status-warning/20',
     },
@@ -119,7 +119,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                                 </div>
                                 <div className="bg-status-warning/10 rounded-xl p-3 text-center">
                                     <AlertCircle size={18} className="text-status-warning mx-auto mb-1" />
-                                    <p className="text-lg font-bold text-status-warning">{report.lateCount}</p>
+                                    <p className="text-lg font-bold text-status-warning">{report.partialCount}</p>
                                     <p className="text-xs text-text-muted">Late</p>
                                 </div>
                                 <div className="bg-status-error/10 rounded-xl p-3 text-center">
