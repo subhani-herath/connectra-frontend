@@ -15,6 +15,7 @@ import {
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
 import { clsx } from 'clsx';
+import logo from '../../assets/logo.png';
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -75,15 +76,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
         >
             {/* Logo */}
             <div className="p-4 border-b border-gray-200">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center flex-shrink-0">
-                        <span className="text-white font-bold text-lg">C</span>
-                    </div>
-                    {!isCollapsed && (
-                        <span className="text-xl font-bold text-black whitespace-nowrap">
-                            Connectra
-                        </span>
-                    )}
+                <div className="flex items-center justify-center">
+                    <img
+                        src={logo}
+                        alt="Connectra"
+                        className={clsx(
+                            'transition-all duration-300',
+                            isCollapsed ? 'h-8 w-8 object-contain object-left' : 'h-10'
+                        )}
+                    />
                 </div>
             </div>
 

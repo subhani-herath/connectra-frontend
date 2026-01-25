@@ -5,6 +5,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService, type LoginRequest } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
+import logoWhite from '../../assets/logo-white.png';
+import logo from '../../assets/logo.png';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -62,7 +64,7 @@ export const LoginPage: React.FC = () => {
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Connectra</h1>
+                        <img src={logoWhite} alt="Connectra" className="h-10" />
                     </div>
 
                     {/* Welcome Text */}

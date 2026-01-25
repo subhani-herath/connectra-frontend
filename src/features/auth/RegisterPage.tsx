@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
+import logoWhite from '../../assets/logo-white.png';
+import logo from '../../assets/logo.png';
 
 interface RegisterFormData {
     firstName: string;
@@ -62,8 +64,9 @@ export const RegisterPage: React.FC = () => {
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Connectra</h1>
+                        <img src={logoWhite} alt="Connectra" className="h-10" />
                     </div>
+
 
                     {/* Welcome Text */}
                     <div className="mb-20">
@@ -84,7 +87,7 @@ export const RegisterPage: React.FC = () => {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center mb-8">
-                        <h1 className="text-2xl font-bold text-slate-800">Connectra</h1>
+                        <img src={logo} alt="Connectra" className="h-10 mx-auto" />
                     </div>
 
                     {/* Form Header */}
