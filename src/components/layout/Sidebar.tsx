@@ -32,7 +32,6 @@ const roleConfig: Record<string, { icon: React.ReactNode; label: string; items: 
         icon: <GraduationCap className="w-5 h-5" />,
         label: 'Student',
         items: [
-            { to: '/student/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
             { to: '/student/meetings', icon: <Calendar size={20} />, label: 'My Meetings' },
             { to: '/student/attendance', icon: <ClipboardList size={20} />, label: 'Attendance' },
         ],
@@ -41,7 +40,7 @@ const roleConfig: Record<string, { icon: React.ReactNode; label: string; items: 
         icon: <BookOpen className="w-5 h-5" />,
         label: 'Lecturer',
         items: [
-            { to: '/lecturer/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+            { to: '/lecturer/dashboard', icon: <LayoutDashboard size={20} />, label: 'My Meetings' },
             { to: '/lecturer/create-meeting', icon: <Plus size={20} />, label: 'New Meeting' },
         ],
     },
@@ -70,18 +69,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
     return (
         <aside
             className={clsx(
-                'fixed left-0 top-0 h-screen bg-background-card border-r border-white/5 flex flex-col z-40 transition-all duration-300 ease-in-out',
+                'fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-40 transition-all duration-300 ease-in-out',
                 isCollapsed ? 'w-16' : 'w-60'
             )}
         >
             {/* Logo */}
-            <div className="p-4 border-b border-white/5">
+            <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center flex-shrink-0">
                         <span className="text-white font-bold text-lg">C</span>
                     </div>
                     {!isCollapsed && (
-                        <span className="text-xl font-bold text-text-primary whitespace-nowrap">
+                        <span className="text-xl font-bold text-black whitespace-nowrap">
                             Connectra
                         </span>
                     )}
@@ -89,17 +88,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             </div>
 
             {/* User Info */}
-            <div className="p-4 border-b border-white/5">
+            <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-primary/40 flex items-center justify-center flex-shrink-0 text-primary">
                         {config.icon}
                     </div>
                     {!isCollapsed && (
                         <div className="min-w-0">
-                            <p className="text-sm font-medium text-text-primary truncate">
+                            <p className="text-sm font-medium text-black truncate">
                                 {user?.firstName} {user?.lastName}
                             </p>
-                            <p className="text-xs text-text-muted truncate">{user?.email}</p>
+                            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                         </div>
                     )}
                 </div>
@@ -115,8 +114,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                             clsx(
                                 'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative',
                                 isActive
-                                    ? 'bg-primary/20 text-primary'
-                                    : 'text-text-secondary hover:bg-background-surface hover:text-text-primary'
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-black'
                             )
                         }
                     >
@@ -136,11 +135,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
             </nav>
 
             {/* Bottom Actions */}
-            <div className="p-3 border-t border-white/5 space-y-1">
+            <div className="p-3 border-t border-gray-200 space-y-1">
                 {/* Toggle Button */}
                 <button
                     onClick={onToggle}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-background-surface hover:text-text-primary transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-black transition-all"
                 >
                     {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     {!isCollapsed && <span className="font-medium">Collapse</span>}
@@ -149,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggle }) => {
                 {/* Logout */}
                 <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-status-error/20 hover:text-status-error transition-all"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-red-100 hover:text-red-600 transition-all"
                 >
                     <LogOut size={20} />
                     {!isCollapsed && <span className="font-medium">Logout</span>}
