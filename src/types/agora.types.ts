@@ -24,6 +24,8 @@ export interface RemoteUser {
     hasAudio: boolean;
     videoTrack?: IRemoteVideoTrack;
     audioTrack?: IRemoteAudioTrack;
+    userName?: string;
+    isHost?: boolean;
 }
 
 export interface UseAgoraReturn {

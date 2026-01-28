@@ -86,7 +86,7 @@ export const LoginPage: React.FC = () => {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center mb-8">
-                        <h1 className="text-2xl font-bold text-slate-800">Connectra</h1>
+                        <img src={logo} alt="Connectra" className="h-10 mx-auto" />
                     </div>
 
                     {/* Form Header */}
@@ -104,7 +104,7 @@ export const LoginPage: React.FC = () => {
                             </label>
                             <input
                                 type="email"
-                                placeholder="name@university.edu"
+                                placeholder="example@uwu.ac.lk"
                                 className={`w-full px-4 py-3 rounded-lg border bg-white text-slate-800 placeholder:text-slate-400 outline-none transition-all ${errors.email
                                         ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
                                         : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'

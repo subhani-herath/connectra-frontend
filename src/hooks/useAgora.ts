@@ -75,6 +75,44 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                 const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
                 clientRef.current = client;
 
+                // Helper function to get user attributes with caching
+                const getUserNameAndHost = async (uid: number | string) => {
+                    // Check cache first
+                    if (userAttributesRef.current[uid]) {
+                        return userAttributesRef.current[uid];
+                    }
+
+                    let userName = '';
+                    let isHost = false;
+                    
+                    try {
+                        // Try to get attributes with retries
+                        let attributes = null;
+                        for (let i = 0; i < 3; i++) {
+                            try {
+                                attributes = await client.getUserAttributes(uid);
+                                if (attributes) break;
+                                // Wait before retry
+                                await new Promise(resolve => setTimeout(resolve, 100));
+                            } catch (e) {
+                                if (i === 2) throw e;
+                            }
+                        }
+
+                        if (attributes) {
+                            userName = attributes['userName'] || '';
+                            isHost = attributes['isHost'] === 'true';
+                            console.log('User attributes for', uid, ':', { userName, isHost });
+                        }
+                    } catch (error) {
+                        console.warn('Failed to get user attributes for', uid, ':', error);
+                    }
+
+                    // Cache the result
+                    userAttributesRef.current[uid] = { userName, isHost };
+                    return { userName, isHost };
+                };
+
                 // Set up remote user event handlers
                 client.on('user-published', async (user, mediaType) => {
                     if (isCancelled) return;

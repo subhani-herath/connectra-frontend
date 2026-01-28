@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Users, Loader2, AlertTriangle, Info, ClipboardList, ChevronRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgora } from '../../hooks/useAgora';
+import { useAgoraRTM } from '../../hooks/useAgoraRTM';
 import { useAuthStore } from '../../stores/authStore';
 import { meetingService, type Meeting } from '../../services/meetingService';
 import { VideoGrid } from './components/VideoGrid';
@@ -24,6 +25,7 @@ export const MeetingRoom: React.FC = () => {
 
     // meetingId is already a string (UUID)
     const isLecturer = user?.role === 'LECTURER';
+    const userName = user?.email?.split('@')[0] || 'You';
 
     const {
         isJoined,
@@ -40,6 +42,13 @@ export const MeetingRoom: React.FC = () => {
         stopScreenShare,
         leave,
     } = useAgora(meetingId || '');
+
+    // RTM for real-time participant info sync
+    const {
+        isConnected: rtmConnected,
+        participants: rtmParticipants,
+        broadcastParticipantInfo,
+    } = useAgoraRTM(meetingId || '');
 
     // Fetch meeting details
     useEffect(() => {
@@ -94,6 +103,14 @@ export const MeetingRoom: React.FC = () => {
         return () => clearInterval(interval);
     }, [isJoined]);
 
+    // Broadcast participant info when joining the meeting
+    useEffect(() => {
+        if (isJoined && rtmConnected) {
+            console.log('Broadcasting participant info with name:', user?.email);
+            broadcastParticipantInfo(0, isLecturer, user?.email || userName);
+        }
+    }, [isJoined, rtmConnected, isLecturer, user?.email, userName, broadcastParticipantInfo]);
+
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
@@ -122,29 +139,49 @@ export const MeetingRoom: React.FC = () => {
         await startScreenShare(sourceId);
     };
 
-    // Build participants list
+    // Build participants list - uses RTM for real names, with fallback to generic names
+    const getParticipantDisplayName = (uid: number | string, remoteIndex: number = 0): string => {
+        // Try to get real name from RTM participants map
+        const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
+        const participantInfo = rtmParticipants.get(numericUid);
+
+        if (participantInfo) {
+            const suffix = participantInfo.isHost ? ' (Host)' : '';
+            return `${participantInfo.displayName}${suffix}`;
+        }
+
+        // Fallback when RTM is unavailable - check if it's the lecturer for students
+        if (!isLecturer && remoteIndex === 0) {
+            // First remote user is the lecturer
+            return `${meeting?.createdByName || 'Lecturer'} (Host)`;
+        }
+        
+        // For other participants, try to show something meaningful
+        // This will show generic names only as last resort
+        return `Participant ${remoteIndex + 1}`;
+    };
+
     const participants = [
         {
             uid: 0,
             name: isLecturer
-                ? `${user?.email || 'You'} (Host)`
-                : (user?.email || 'You'),
+                ? `${userName} (Host)`
+                : userName,
             hasVideo: !isCamOff || isScreenSharing,
             hasAudio: !isMicMuted,
             isLocal: true,
         },
-        ...remoteUsers.map((u) => ({
-            uid: u.uid,
-            // For students: show lecturer's name with (Host)
-            // For lecturers: show student's UID (we don't have their email)
-            name: isLecturer
-                ? `Student ${u.uid}`
-                : `${meeting?.createdByName || 'Lecturer'} (Host)`,
-            hasVideo: u.hasVideo,
-            hasAudio: u.hasAudio,
-            isLocal: false,
-            videoTrack: u.videoTrack,
-        })),
+        ...remoteUsers.map((u, index) => {
+            return {
+                uid: u.uid,
+                name: getParticipantDisplayName(u.uid, index),
+                hasVideo: u.hasVideo,
+                hasAudio: u.hasAudio,
+                isLocal: false,
+                videoTrack: u.videoTrack,
+                isHost: !isLecturer && index === 0, // Only first remote user is host when viewing as student
+            };
+        }),
     ];
 
     // Loading state
