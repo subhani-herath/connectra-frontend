@@ -3,9 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Users, Loader2, AlertTriangle, Info, ClipboardList, ChevronRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgora } from '../../hooks/useAgora';
-import { useAgoraRTM } from '../../hooks/useAgoraRTM';
 import { useAuthStore } from '../../stores/authStore';
-import { meetingService, type Meeting } from '../../services/meetingService';
+import { meetingService, type Meeting, type Participant } from '../../services/meetingService';
 import { VideoGrid } from './components/VideoGrid';
 import { ScreenShareLayout } from './components/ScreenShareLayout';
 import { Controls } from './components/Controls';
@@ -45,12 +44,8 @@ export const MeetingRoom: React.FC = () => {
         currentUserInfo,
     } = useAgora(meetingId || '');
 
-    // RTM for real-time participant info sync
-    const {
-        isConnected: rtmConnected,
-        participants: rtmParticipants,
-        broadcastParticipantInfo,
-    } = useAgoraRTM(meetingId || '');
+    // Backend-based participant name sync (replaces RTM placeholder)
+    const [backendParticipants, setBackendParticipants] = useState<Participant[]>([]);
 
     // Fetch meeting details
     useEffect(() => {
@@ -128,13 +123,27 @@ export const MeetingRoom: React.FC = () => {
         return () => clearInterval(interval);
     }, [isJoined]);
 
-    // Broadcast participant info when joining the meeting
+    // Poll backend for participant names every 5 seconds
     useEffect(() => {
-        if (isJoined && rtmConnected && currentUserInfo) {
-            console.log('Broadcasting participant info with name:', currentUserInfo.userName);
-            broadcastParticipantInfo(currentUserInfo.uid, currentUserInfo.isHost, currentUserInfo.userName);
-        }
-    }, [isJoined, rtmConnected, currentUserInfo, broadcastParticipantInfo]);
+        if (!isJoined || !meetingId) return;
+
+        const fetchParticipants = async () => {
+            try {
+                const participants = await meetingService.getParticipants(meetingId);
+                setBackendParticipants(participants);
+            } catch (error) {
+                console.debug('Failed to fetch participants:', error);
+            }
+        };
+
+        // Initial fetch
+        fetchParticipants();
+
+        // Poll every 5 seconds
+        const interval = setInterval(fetchParticipants, 5000);
+
+        return () => clearInterval(interval);
+    }, [isJoined, meetingId]);
 
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
@@ -173,25 +182,24 @@ export const MeetingRoom: React.FC = () => {
         await startScreenShare(sourceId);
     };
 
-    // Build participants list - uses RTM for real names, with fallback to generic names
+    // Build participants list - uses backend API for real names, with fallback to generic names
     const getParticipantDisplayName = (uid: number | string, remoteIndex: number = 0): string => {
-        // Try to get real name from RTM participants map
+        // Try to get real name from backend participants
         const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
-        const participantInfo = rtmParticipants.get(numericUid);
+        const participantInfo = backendParticipants.find(p => p.agoraUid === numericUid);
 
         if (participantInfo) {
             const suffix = participantInfo.isHost ? ' (Host)' : '';
             return `${participantInfo.displayName}${suffix}`;
         }
 
-        // Fallback when RTM is unavailable - check if it's the lecturer for students
+        // Fallback when backend data is unavailable - check if it's the lecturer for students
         if (!isLecturer && remoteIndex === 0) {
             // First remote user is the lecturer
             return `${meeting?.createdByName || 'Lecturer'} (Host)`;
         }
 
-        // For other participants, try to show something meaningful
-        // This will show generic names only as last resort
+        // For other participants, show generic names as last resort
         return `Participant ${remoteIndex + 1}`;
     };
 
