@@ -78,7 +78,6 @@ export const CreateMeetingPage: React.FC = () => {
         <div className="min-h-screen">
             <TopHeader
                 title="Schedule Meeting"
-                subtitle="Create a new virtual classroom session"
             />
 
             <main className="p-6">

@@ -41,18 +41,27 @@ const formatTime = (dateString?: string): string => {
     });
 };
 
-const generateCSV = (report: AttendanceReport): string => {
-    const headers = ['Student Name', 'Email', 'Status', 'Joined At', 'Left At'];
-    const rows = (report.entries || []).map((entry) => [
+const generateCSV = (report: any): string => {
+    const headers = ['Student ID', 'Student Name', 'Status', 'Duration (Minutes)'];
+    
+    // Combine all students from the actual backend response
+    const allStudents = [
+        ...(report.presentStudents || []),
+        ...(report.partiallyAttendedStudents || []),
+        ...(report.absentStudents || []),
+    ];
+    
+    const rows = allStudents.map((entry: any) => [
+        entry.studenEnrollmentId,
         entry.studentName,
-        entry.studentEmail,
-        entry.status,
-        entry.joinedAt ? new Date(entry.joinedAt).toLocaleString() : '-',
-        entry.leftAt ? new Date(entry.leftAt).toLocaleString() : '-',
+        entry.attendanceStatus,
+        entry.durationMinutes?.toString() || '0',
     ]);
 
     const csvContent = [
-        [`Meeting: ${report.meetingTitle}`],
+        [`Meeting: ${report.topic}`],
+        [`Lecturer: ${report.lecturerName}`],
+        [`Degree: ${report.degree}`, `Batch: ${report.batch}`],
         [`Total Students: ${report.totalStudents}`],
         [`Present: ${report.presentCount}`, `Partial: ${report.partialCount}`, `Absent: ${report.absentCount}`],
         [],
@@ -65,12 +74,12 @@ const generateCSV = (report: AttendanceReport): string => {
     return csvContent;
 };
 
-const downloadCSV = (report: AttendanceReport): void => {
+const downloadCSV = (report: any): void => {
     const csvContent = generateCSV(report);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    const fileName = `Attendance_${report.meetingTitle}_${new Date().toISOString().split('T')[0]}.csv`;
+    const fileName = `Attendance_${report.topic}_${new Date().toISOString().split('T')[0]}.csv`;
 
     link.setAttribute('href', url);
     link.setAttribute('download', fileName);
@@ -171,44 +180,74 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
 
                             {/* Student List */}
                             <div className="space-y-2">
-                                {!report.entries || report.entries.length === 0 ? (
-                                    <p className="text-gray-500 text-center py-8">No students enrolled</p>
-                                ) : (
-                                    report.entries.map((entry) => {
-                                        const status = statusConfig[entry.status] || {
-                                            label: 'Unknown',
-                                            icon: <AlertCircle size={14} />,
-                                            className: 'text-gray-700 bg-gray-100',
-                                        };
-                                        return (
-                                            <div
-                                                key={entry.studentId}
-                                                className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"
-                                            >
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-black truncate">
-                                                        {entry.studentName}
-                                                    </p>
-                                                    <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                                                        <Mail size={10} />
-                                                        <span className="truncate">{entry.studentEmail}</span>
+                                {/* Meeting Info */}
+                                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-sm space-y-1">
+                                    <p><span className="font-semibold">Topic:</span> {report.topic}</p>
+                                    <p><span className="font-semibold">Lecturer:</span> {report.lecturerName}</p>
+                                    <p><span className="font-semibold">Degree:</span> {report.degree} | <span className="font-semibold">Batch:</span> {report.batch}</p>
+                                    <p><span className="font-semibold">Duration:</span> {report.durationMinutes} minutes</p>
+                                </div>
+
+                                {/* Present Students */}
+                                {report.presentStudents && report.presentStudents.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-green-600 mb-2">✓ Present ({report.presentStudents.length})</h4>
+                                        <div className="space-y-2">
+                                            {report.presentStudents.map((entry) => (
+                                                <div key={entry.studenEnrollmentId} className="flex items-center gap-3 p-2 bg-green-50 rounded">
+                                                    <CheckCircle size={14} className="text-green-600" />
+                                                    <div className="flex-1 text-sm">
+                                                        <p className="font-medium text-black">{entry.studentName}</p>
+                                                        <p className="text-gray-500 text-xs">{entry.studenEnrollmentId}</p>
                                                     </div>
+                                                    <span className="text-xs text-gray-500">{entry.durationMinutes}m</span>
                                                 </div>
-                                                {entry.joinedAt && (
-                                                    <div className="text-xs text-gray-500 flex items-center gap-1">
-                                                        <Clock size={10} />
-                                                        {formatTime(entry.joinedAt)}
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Partially Attended Students */}
+                                {report.partiallyAttendedStudents && report.partiallyAttendedStudents.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-yellow-600 mb-2">⚠ Partial ({report.partiallyAttendedStudents.length})</h4>
+                                        <div className="space-y-2">
+                                            {report.partiallyAttendedStudents.map((entry) => (
+                                                <div key={entry.studenEnrollmentId} className="flex items-center gap-3 p-2 bg-yellow-50 rounded">
+                                                    <AlertCircle size={14} className="text-yellow-600" />
+                                                    <div className="flex-1 text-sm">
+                                                        <p className="font-medium text-black">{entry.studentName}</p>
+                                                        <p className="text-gray-500 text-xs">{entry.studenEnrollmentId}</p>
                                                     </div>
-                                                )}
-                                                <span
-                                                    className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${status.className}`}
-                                                >
-                                                    {status.icon}
-                                                    {status.label}
-                                                </span>
-                                            </div>
-                                        );
-                                    })
+                                                    <span className="text-xs text-gray-500">{entry.durationMinutes}m</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Absent Students */}
+                                {report.absentStudents && report.absentStudents.length > 0 && (
+                                    <div>
+                                        <h4 className="font-semibold text-red-600 mb-2">✗ Absent ({report.absentStudents.length})</h4>
+                                        <div className="space-y-2">
+                                            {report.absentStudents.map((entry) => (
+                                                <div key={entry.studenEnrollmentId} className="flex items-center gap-3 p-2 bg-red-50 rounded">
+                                                    <XCircle size={14} className="text-red-600" />
+                                                    <div className="flex-1 text-sm">
+                                                        <p className="font-medium text-black">{entry.studentName}</p>
+                                                        <p className="text-gray-500 text-xs">{entry.studenEnrollmentId}</p>
+                                                    </div>
+                                                    <span className="text-xs text-gray-500">{entry.durationMinutes}m</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Empty State */}
+                                {(!report.presentStudents?.length && !report.partiallyAttendedStudents?.length && !report.absentStudents?.length) && (
+                                    <p className="text-gray-500 text-center py-8">No students enrolled</p>
                                 )}
                             </div>
                         </>

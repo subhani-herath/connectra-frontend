@@ -24,8 +24,9 @@ export const LoginPage: React.FC = () => {
         setIsLoading(true);
         try {
             const response = await authService.login(data);
-            login({ email: response.email, role: response.role }, response.accessToken);
-            toast.success(`Welcome back, ${response.email.split('@')[0]}!`);
+            const firstName = response.email.split('@')[0].split('.')[0];
+            login({ email: response.email, role: response.role, firstName }, response.accessToken);
+            toast.success(`Welcome back, ${firstName}!`);
 
             switch (response.role) {
                 case 'STUDENT':

@@ -80,7 +80,6 @@ export const AttendanceHistoryPage: React.FC = () => {
         <div className="min-h-screen">
             <TopHeader
                 title="Attendance History"
-                subtitle={user?.email}
                 onRefresh={() => fetchAttendance(true)}
                 isRefreshing={isRefreshing}
             />

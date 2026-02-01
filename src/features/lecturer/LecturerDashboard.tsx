@@ -221,8 +221,7 @@ export const LecturerDashboard: React.FC = () => {
     return (
         <div className="min-h-screen">
             <TopHeader
-                title="Dashboard"
-                subtitle={user?.email}
+                title={"Hi, " + user?.firstName}
                 onRefresh={() => fetchMeetings(true)}
                 isRefreshing={isRefreshing}
                 actions={

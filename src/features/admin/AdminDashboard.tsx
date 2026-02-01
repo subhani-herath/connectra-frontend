@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import {
     Plus,
     Trash2,
@@ -21,6 +22,8 @@ import { EditLecturerModal } from './components/EditLecturerModal';
 
 export const AdminDashboard: React.FC = () => {
     const { user } = useAuthStore();
+    const location = useLocation();
+    const isLecturerTab = location.pathname === '/admin/lecturers';
     const [lecturers, setLecturers] = useState<Lecturer[]>([]);
     const [filteredLecturers, setFilteredLecturers] = useState<Lecturer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -105,8 +108,7 @@ export const AdminDashboard: React.FC = () => {
     return (
         <div className="min-h-screen">
             <TopHeader
-                title="Lecturer Management"
-                subtitle={user?.email}
+                title={"Hi, " + user?.firstName}
                 onRefresh={() => fetchLecturers(true)}
                 isRefreshing={isRefreshing}
                 actions={
@@ -138,21 +140,23 @@ export const AdminDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div className="bg-background-card rounded-xl border border-white/5 p-5">
-                        <p className="text-sm text-text-secondary mb-1">Total Lecturers</p>
-                        <p className="text-3xl font-bold text-text-primary">{lecturers.length}</p>
+                {/* Stats - Only show on Dashboard tab */}
+                {!isLecturerTab && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-background-card rounded-xl border border-white/5 p-5">
+                            <p className="text-sm text-text-secondary mb-1">Total Lecturers</p>
+                            <p className="text-3xl font-bold text-text-primary">{lecturers.length}</p>
+                        </div>
+                        <div className="bg-background-card rounded-xl border border-white/5 p-5">
+                            <p className="text-sm text-text-secondary mb-1">Search Results</p>
+                            <p className="text-3xl font-bold text-primary">{filteredLecturers.length}</p>
+                        </div>
+                        <div className="bg-background-card rounded-xl border border-white/5 p-5">
+                            <p className="text-sm text-text-secondary mb-1">Role</p>
+                            <p className="text-3xl font-bold text-status-success">ADMIN</p>
+                        </div>
                     </div>
-                    <div className="bg-background-card rounded-xl border border-white/5 p-5">
-                        <p className="text-sm text-text-secondary mb-1">Search Results</p>
-                        <p className="text-3xl font-bold text-primary">{filteredLecturers.length}</p>
-                    </div>
-                    <div className="bg-background-card rounded-xl border border-white/5 p-5">
-                        <p className="text-sm text-text-secondary mb-1">Role</p>
-                        <p className="text-3xl font-bold text-status-success">ADMIN</p>
-                    </div>
-                </div>
+                )}
 
                 {/* Lecturer List */}
                 {isLoading ? (

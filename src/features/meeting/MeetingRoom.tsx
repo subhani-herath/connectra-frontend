@@ -7,6 +7,7 @@ import { useAgoraRTM } from '../../hooks/useAgoraRTM';
 import { useAuthStore } from '../../stores/authStore';
 import { meetingService, type Meeting } from '../../services/meetingService';
 import { VideoGrid } from './components/VideoGrid';
+import { ScreenShareLayout } from './components/ScreenShareLayout';
 import { Controls } from './components/Controls';
 import { ScreenPicker } from './components/ScreenPicker';
 import { QuizPanel } from '../lecturer/components/QuizPanel';
@@ -69,6 +70,29 @@ export const MeetingRoom: React.FC = () => {
         }
     }, [meetingId]);
 
+    // Record student attendance on join/leave
+    useEffect(() => {
+        if (!meetingId || isLecturer) return;
+
+        const recordAttendance = async () => {
+            try {
+                if (isJoined) {
+                    // Student joined - record attendance
+                    await meetingService.joinMeeting(meetingId);
+                    console.log('Attendance recorded: joined meeting');
+                } else {
+                    // Student left - update attendance
+                    await meetingService.leaveMeeting(meetingId);
+                    console.log('Attendance recorded: left meeting');
+                }
+            } catch (error) {
+                console.error('Failed to record attendance:', error);
+            }
+        };
+
+        recordAttendance();
+    }, [isJoined, meetingId, isLecturer]);
+
     // Poll meeting status for students - detect when lecturer ends the meeting
     useEffect(() => {
         if (!isJoined || !meetingId || isLecturer) return;
@@ -106,10 +130,11 @@ export const MeetingRoom: React.FC = () => {
     // Broadcast participant info when joining the meeting
     useEffect(() => {
         if (isJoined && rtmConnected) {
-            console.log('Broadcasting participant info with name:', user?.email);
-            broadcastParticipantInfo(0, isLecturer, user?.email || userName);
+            const displayName = user?.firstName || user?.email?.split('@')[0] || userName;
+            console.log('Broadcasting participant info with name:', displayName);
+            broadcastParticipantInfo(0, isLecturer, displayName);
         }
-    }, [isJoined, rtmConnected, isLecturer, user?.email, userName, broadcastParticipantInfo]);
+    }, [isJoined, rtmConnected, isLecturer, user?.firstName, user?.email, userName, broadcastParticipantInfo]);
 
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
@@ -122,6 +147,15 @@ export const MeetingRoom: React.FC = () => {
     };
 
     const handleLeave = async () => {
+        // Record attendance leave for students
+        if (!isLecturer && meetingId) {
+            try {
+                await meetingService.leaveMeeting(meetingId);
+            } catch (error) {
+                console.error('Failed to record leave attendance:', error);
+            }
+        }
+        
         await leave();
         toast.success('You have left the meeting');
         navigate(isLecturer ? '/lecturer/dashboard' : '/student/dashboard');
@@ -248,13 +282,21 @@ export const MeetingRoom: React.FC = () => {
 
             {/* Main content with sidebar */}
             <div className="flex-1 flex overflow-hidden">
-                {/* Video Grid */}
+                {/* Video Grid or Screen Share Layout */}
                 <main className={`flex-1 overflow-auto transition-all ${showSidebar ? 'mr-0' : ''}`}>
-                    <VideoGrid
-                        participants={participants}
-                        localVideoTrack={localVideoTrack}
-                        isScreenSharing={isScreenSharing}
-                    />
+                    {isScreenSharing ? (
+                        <ScreenShareLayout
+                            participants={participants}
+                            localVideoTrack={localVideoTrack}
+                            isScreenSharing={isScreenSharing}
+                        />
+                    ) : (
+                        <VideoGrid
+                            participants={participants}
+                            localVideoTrack={localVideoTrack}
+                            isScreenSharing={isScreenSharing}
+                        />
+                    )}
                 </main>
 
                 {/* Sidebar Toggle */}

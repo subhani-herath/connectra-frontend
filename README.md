@@ -44,39 +44,6 @@ A modern virtual classroom application built for Uva Wellassa University, enabli
 - **API Docs**: Swagger/OpenAPI
 - **Video Tokens**: Agora Token Builder
 
-## Project Structure
-
-```
-Connectra/
-├── connectra-backend/          # Spring Boot backend
-│   ├── src/main/java/
-│   │   └── uwu/connectra/
-│   │       ├── config/         # Security, CORS, Agora config
-│   │       ├── controllers/    # REST API endpoints
-│   │       ├── dtos/           # Data Transfer Objects
-│   │       ├── entities/       # JPA entities
-│   │       ├── repositories/   # Data access layer
-│   │       ├── services/       # Business logic
-│   │       └── utils/          # Helper utilities
-│   └── pom.xml
-│
-└── connectra-frontend/         # React + Electron frontend
-    ├── electron/               # Electron main process
-    ├── public/                 # Static assets
-    ├── src/
-    │   ├── components/         # Reusable UI components
-    │   ├── features/           # Feature modules
-    │   │   ├── admin/          # Admin dashboard
-    │   │   ├── auth/           # Authentication
-    │   │   ├── lecturer/       # Lecturer features
-    │   │   ├── meeting/        # Video meeting room
-    │   │   └── student/        # Student features
-    │   ├── hooks/              # Custom React hooks
-    │   ├── services/           # API services
-    │   ├── stores/             # Zustand stores
-    │   └── types/              # TypeScript types
-    └── package.json
-```
 
 ## Getting Started
 
