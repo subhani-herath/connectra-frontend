@@ -38,8 +38,8 @@ export interface JoinMeetingResponse {
     channelName: string;
     agoraToken: string;
     uid: number;
-    isHost?: boolean;
-    userName?: string;
+    userName: string;
+    isHost: boolean;
 }
 
 export interface UpdateMeetingRequest {
@@ -140,4 +140,18 @@ export const meetingService = {
         );
         return response.data.data;
     },
+
+    getParticipants: async (meetingId: string): Promise<Participant[]> => {
+        const response = await axiosInstance.get<ApiResponse<Participant[]>>(
+            `/api/meeting/${meetingId}/participants`
+        );
+        return response.data.data;
+    },
 };
+
+// Participant info for name sync
+export interface Participant {
+    agoraUid: number;
+    displayName: string;
+    isHost: boolean;
+}
