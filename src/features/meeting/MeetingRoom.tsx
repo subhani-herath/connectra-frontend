@@ -218,6 +218,10 @@ export const MeetingRoom: React.FC = () => {
         }),
     ];
 
+    // Determine if screen sharing layout should be used
+    // Use it when local user is sharing, or when there are multiple participants (professional presentation view)
+    const shouldUseScreenShareLayout = participants.length > 2 || isScreenSharing;
+
     // Loading state
     if (meetingLoading || agoraLoading) {
         return (
@@ -284,7 +288,7 @@ export const MeetingRoom: React.FC = () => {
             <div className="flex-1 flex overflow-hidden">
                 {/* Video Grid or Screen Share Layout */}
                 <main className={`flex-1 overflow-auto transition-all ${showSidebar ? 'mr-0' : ''}`}>
-                    {isScreenSharing ? (
+                    {shouldUseScreenShareLayout ? (
                         <ScreenShareLayout
                             participants={participants}
                             localVideoTrack={localVideoTrack}

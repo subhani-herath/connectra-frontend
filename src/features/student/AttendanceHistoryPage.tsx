@@ -5,7 +5,7 @@ import { studentService, type AttendanceRecord, type AttendanceStatus } from '..
 import { TopHeader } from '../../components/layout';
 import { useAuthStore } from '../../stores/authStore';
 
-const statusConfig: Record<AttendanceStatus, { label: string; icon: React.ReactNode; className: string }> = {
+const statusConfig: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
     PRESENT: {
         label: 'Present',
         icon: <CheckCircle size={16} />,
@@ -69,9 +69,9 @@ export const AttendanceHistoryPage: React.FC = () => {
         fetchAttendance();
     }, [filterStatus]);
 
-    const presentCount = records.filter((r) => r.status === 'PRESENT').length;
-    const absentCount = records.filter((r) => r.status === 'ABSENT').length;
-    const partialCount = records.filter((r) => r.status === 'PARTIALLY_PRESENT').length;
+    const presentCount = records.filter((r) => r.attendanceStatus === 'PRESENT').length;
+    const absentCount = records.filter((r) => r.attendanceStatus === 'ABSENT').length;
+    const partialCount = records.filter((r) => r.attendanceStatus === 'PARTIALLY_PRESENT').length;
     const attendanceRate = records.length > 0
         ? Math.round(((presentCount + partialCount) / records.length) * 100)
         : 0;
@@ -137,7 +137,7 @@ export const AttendanceHistoryPage: React.FC = () => {
                 ) : (
                     <div className="space-y-3">
                         {records.map((record) => {
-                            const status = statusConfig[record.status] || {
+                            const status = statusConfig[record.attendanceStatus] || {
                                 label: 'Unknown',
                                 icon: <AlertCircle size={16} />,
                                 className: 'bg-gray-100 text-gray-700 border-gray-300',
@@ -159,15 +159,28 @@ export const AttendanceHistoryPage: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar size={14} className="text-gray-400" />
-                                                    <span>{formatDate(record.scheduledStartTime)}</span>
+                                                    <span>{formatDate(record.meetingDate)}</span>
                                                 </div>
-                                                {record.actualStartTime && (
+                                                {record.joinedAt && (
                                                     <div className="flex items-center gap-1.5">
                                                         <Clock size={14} className="text-gray-400" />
-                                                        <span>{formatTime(record.actualStartTime)}</span>
+                                                        <span>{formatTime(record.joinedAt)}</span>
+                                                    </div>
+                                                )}
+                                                {record.totalTimeInMinutes !== undefined && (
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Clock size={14} className="text-gray-400" />
+                                                        <span>{record.totalTimeInMinutes} mins</span>
                                                     </div>
                                                 )}
                                             </div>
+                                            {record.attendancePercentage !== undefined && (
+                                                <div className="mt-3 flex items-center gap-2">
+                                                    <div className="text-xs font-medium text-gray-600">
+                                                        Attendance: {record.attendancePercentage.toFixed(1)}%
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                         <span
                                             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border ${status.className}`}
