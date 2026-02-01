@@ -42,6 +42,7 @@ export const MeetingRoom: React.FC = () => {
         startScreenShare,
         stopScreenShare,
         leave,
+        currentUserInfo,
     } = useAgora(meetingId || '');
 
     // RTM for real-time participant info sync
@@ -129,12 +130,11 @@ export const MeetingRoom: React.FC = () => {
 
     // Broadcast participant info when joining the meeting
     useEffect(() => {
-        if (isJoined && rtmConnected) {
-            const displayName = user?.firstName || user?.email?.split('@')[0] || userName;
-            console.log('Broadcasting participant info with name:', displayName);
-            broadcastParticipantInfo(0, isLecturer, displayName);
+        if (isJoined && rtmConnected && currentUserInfo) {
+            console.log('Broadcasting participant info with name:', currentUserInfo.userName);
+            broadcastParticipantInfo(currentUserInfo.uid, currentUserInfo.isHost, currentUserInfo.userName);
         }
-    }, [isJoined, rtmConnected, isLecturer, user?.firstName, user?.email, userName, broadcastParticipantInfo]);
+    }, [isJoined, rtmConnected, currentUserInfo, broadcastParticipantInfo]);
 
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
@@ -155,7 +155,7 @@ export const MeetingRoom: React.FC = () => {
                 console.error('Failed to record leave attendance:', error);
             }
         }
-        
+
         await leave();
         toast.success('You have left the meeting');
         navigate(isLecturer ? '/lecturer/dashboard' : '/student/dashboard');
@@ -189,7 +189,7 @@ export const MeetingRoom: React.FC = () => {
             // First remote user is the lecturer
             return `${meeting?.createdByName || 'Lecturer'} (Host)`;
         }
-        
+
         // For other participants, try to show something meaningful
         // This will show generic names only as last resort
         return `Participant ${remoteIndex + 1}`;
@@ -197,10 +197,12 @@ export const MeetingRoom: React.FC = () => {
 
     const participants = [
         {
-            uid: 0,
-            name: isLecturer
-                ? `${userName} (Host)`
-                : userName,
+            uid: currentUserInfo?.uid || 0,
+            name: currentUserInfo
+                ? `${currentUserInfo.userName}${currentUserInfo.isHost ? ' (Host)' : ''}`
+                : isLecturer
+                    ? `${userName} (Host)`
+                    : userName,
             hasVideo: !isCamOff || isScreenSharing,
             hasAudio: !isMicMuted,
             isLocal: true,
