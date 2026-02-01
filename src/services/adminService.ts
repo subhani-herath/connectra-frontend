@@ -12,6 +12,7 @@ export interface Lecturer {
     email: string;
     firstName: string;
     lastName: string;
+    accountStatus: 'ACTIVE' | 'DEACTIVATED';
     createdAt?: string;
 }
 
@@ -46,6 +47,14 @@ export const adminService = {
 
     deleteLecturer: async (userId: number): Promise<void> => {
         await axiosInstance.delete(`/api/admin/users/${userId}`);
+    },
+
+    activateLecturer: async (userId: number): Promise<void> => {
+        await axiosInstance.put(`/api/admin/users/${userId}/activate`);
+    },
+
+    deactivateLecturer: async (userId: number): Promise<void> => {
+        await axiosInstance.put(`/api/admin/users/${userId}/deactivate`);
     },
 
     updateLecturer: async (lecturerId: number, data: UpdateLecturerRequest): Promise<Lecturer> => {
