@@ -28,6 +28,12 @@ export interface RemoteUser {
     isHost?: boolean;
 }
 
+export interface CurrentUserInfo {
+    uid: number;
+    userName: string;
+    isHost: boolean;
+}
+
 export interface UseAgoraReturn {
     isJoined: boolean;
     isLoading: boolean;
@@ -43,6 +49,7 @@ export interface UseAgoraReturn {
     startScreenShare: (sourceId?: string) => Promise<void>;
     stopScreenShare: () => Promise<void>;
     leave: () => Promise<void>;
+    currentUserInfo: CurrentUserInfo | null;
 }
 
 export interface JoinMeetingPayload {
