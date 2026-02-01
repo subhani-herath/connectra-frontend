@@ -12,6 +12,8 @@ import {
     X,
     AlertTriangle,
     Edit2,
+    ToggleLeft,
+    ToggleRight,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../stores/authStore';
@@ -97,11 +99,26 @@ export const AdminDashboard: React.FC = () => {
     const handleDelete = async (lecturer: Lecturer) => {
         try {
             await adminService.deleteLecturer(lecturer.id);
-            toast.success(`${lecturer.firstName} ${lecturer.lastName} removed`);
+            toast.success(`${lecturer.firstName} ${lecturer.lastName} permanently deleted`);
             setDeleteConfirm(null);
             fetchLecturers();
         } catch (error) {
             toast.error('Failed to delete lecturer');
+        }
+    };
+
+    const handleToggleStatus = async (lecturer: Lecturer) => {
+        try {
+            if (lecturer.accountStatus === 'ACTIVE') {
+                await adminService.deactivateLecturer(lecturer.id);
+                toast.success(`${lecturer.firstName} ${lecturer.lastName} deactivated`);
+            } else {
+                await adminService.activateLecturer(lecturer.id);
+                toast.success(`${lecturer.firstName} ${lecturer.lastName} activated`);
+            }
+            fetchLecturers();
+        } catch (error) {
+            toast.error('Failed to update account status');
         }
     };
 
@@ -196,6 +213,9 @@ export const AdminDashboard: React.FC = () => {
                                     <th className="text-left text-sm font-medium text-text-secondary px-6 py-4">
                                         Email
                                     </th>
+                                    <th className="text-left text-sm font-medium text-text-secondary px-6 py-4">
+                                        Status
+                                    </th>
                                     <th className="text-right text-sm font-medium text-text-secondary px-6 py-4">
                                         Actions
                                     </th>
@@ -218,8 +238,32 @@ export const AdminDashboard: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-text-secondary">{lecturer.email}</td>
+                                        <td className="px-6 py-4">
+                                            <span
+                                                className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${lecturer.accountStatus === 'ACTIVE'
+                                                        ? 'bg-status-success/20 text-status-success'
+                                                        : 'bg-status-error/20 text-status-error'
+                                                    }`}
+                                            >
+                                                {lecturer.accountStatus === 'ACTIVE' ? 'Active' : 'Deactivated'}
+                                            </span>
+                                        </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => handleToggleStatus(lecturer)}
+                                                    className={`p-2 rounded-lg transition-all ${lecturer.accountStatus === 'ACTIVE'
+                                                            ? 'hover:bg-status-warning/20 text-text-muted hover:text-status-warning'
+                                                            : 'hover:bg-status-success/20 text-text-muted hover:text-status-success'
+                                                        }`}
+                                                    title={lecturer.accountStatus === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                                                >
+                                                    {lecturer.accountStatus === 'ACTIVE' ? (
+                                                        <ToggleRight size={18} />
+                                                    ) : (
+                                                        <ToggleLeft size={18} />
+                                                    )}
+                                                </button>
                                                 <button
                                                     onClick={() => setEditingLecturer(lecturer)}
                                                     className="p-2 rounded-lg hover:bg-primary/20 text-text-muted hover:text-primary transition-all"
@@ -230,7 +274,7 @@ export const AdminDashboard: React.FC = () => {
                                                 <button
                                                     onClick={() => setDeleteConfirm(lecturer)}
                                                     className="p-2 rounded-lg hover:bg-status-error/20 text-text-muted hover:text-status-error transition-all"
-                                                    title="Delete"
+                                                    title="Delete Permanently"
                                                 >
                                                     <Trash2 size={18} />
                                                 </button>
