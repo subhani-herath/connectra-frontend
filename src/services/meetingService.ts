@@ -38,8 +38,8 @@ export interface JoinMeetingResponse {
     channelName: string;
     agoraToken: string;
     uid: number;
-    isHost?: boolean;
-    userName?: string;
+    userName: string;
+    isHost: boolean;
 }
 
 export interface UpdateMeetingRequest {
