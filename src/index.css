@@ -2,28 +2,28 @@
 
 /* Connectra Design System - Black & White Theme */
 @theme {
-  /* Primary Colors - White accent on dark */
-  --color-primary: #FFFFFF;
-  --color-primary-hover: #E5E5E5;
-  --color-primary-light: #F5F5F5;
+  /* Primary Colors - Teal theme */
+  --color-primary: #37bc9b;
+  --color-primary-hover: #48cfad;
+  --color-primary-light: #48cfad;
 
-  /* Background Colors - Pure blacks */
-  --color-background-dark: #000000;
-  --color-background-card: #0A0A0A;
-  --color-background-surface: #1A1A1A;
+  /* Background Colors - White */
+  --color-background-dark: #FFFFFF;
+  --color-background-card: #FFFFFF;
+  --color-background-surface: #FFFFFF;
 
   /* Text Colors */
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A3A3A3;
-  --color-text-muted: #737373;
+  --color-text-primary: #000000;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
 
-  /* Status Colors - Grayscale variants */
-  --color-status-success: #FFFFFF;
+  /* Status Colors */
+  --color-status-success: #37bc9b;
   --color-status-error: #FF3333;
   --color-status-warning: #CCCCCC;
   --color-status-live: #FF3333;
-  --color-status-scheduled: #999999;
-  --color-status-ended: #666666;
+  --color-status-scheduled: #37bc9b;
+  --color-status-ended: #999999;
 }
 
 /* Base Styles */
@@ -76,12 +76,56 @@ body {
 .bg-white,
 .bg-primary\/80,
 .bg-primary\/20 {
-  color: #000000 !important;
+  color: #FFFFFF !important;
 }
 
-/* Ensure button text is dark when on white backgrounds */
+/* Ensure button text is white when on primary backgrounds */
 button.bg-primary,
 button.bg-white,
 .btn-primary {
+  color: #FFFFFF !important;
+}
+
+/* Input Fields - Dark gray background with black text */
+input,
+textarea,
+select {
+  background-color: #F3F4F6 !important;
   color: #000000 !important;
+  border-color: #D1D5DB !important;
+  caret-color: #000000 !important;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+  color: #000000 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9CA3AF !important;
+  opacity: 1 !important;
+}
+
+input:autofill {
+  -webkit-autofill-text-fill-color: #000000 !important;
+}
+
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active {
+  -webkit-box-shadow: 0 0 0 30px #F3F4F6 inset !important;
+  box-shadow: 0 0 0 30px #F3F4F6 inset !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: #F3F4F6 !important;
+  color: #000000 !important;
+  border-color: #37bc9b !important;
+  outline: none !important;
 }

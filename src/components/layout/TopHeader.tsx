@@ -1,6 +1,7 @@
 import { RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 
+
 interface TopHeaderProps {
     title: string;
     subtitle?: string;
@@ -11,7 +12,6 @@ interface TopHeaderProps {
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
     title,
-    subtitle,
     onRefresh,
     isRefreshing,
     actions,
@@ -20,8 +20,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <header className="bg-background-card/80 backdrop-blur-sm border-b border-white/5 sticky top-0 z-30">
             <div className="px-6 py-4 flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-bold text-text-primary">{title}</h1>
-                    {subtitle && <p className="text-sm text-text-secondary">{subtitle}</p>}
+                    <h1 className="text-xl font-bold text-text-primary">
+                        {title}
+                    </h1>
                 </div>
                 <div className="flex items-center gap-3">
                     {onRefresh && (

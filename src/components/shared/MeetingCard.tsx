@@ -55,7 +55,7 @@ export const MeetingCard: React.FC<MeetingCardProps> = ({
     const canEnd = isLecturer && meeting.status === 'LIVE';
 
     return (
-        <div className="bg-background-card rounded-xl border border-white/5 p-5 hover:border-primary/30 transition-all group">
+        <div className="bg-background-card rounded-xl border border-primary/30 p-5 hover:border-primary/50 transition-all group">
             {/* Header */}
             <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex-1 min-w-0">

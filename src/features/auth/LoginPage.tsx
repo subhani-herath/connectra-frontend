@@ -5,6 +5,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { authService, type LoginRequest } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
+import logoWhite from '../../assets/logo-white.png';
+import logo from '../../assets/logo.png';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -22,8 +24,9 @@ export const LoginPage: React.FC = () => {
         setIsLoading(true);
         try {
             const response = await authService.login(data);
-            login({ email: response.email, role: response.role }, response.accessToken);
-            toast.success(`Welcome back, ${response.email.split('@')[0]}!`);
+            const firstName = response.email.split('@')[0].split('.')[0];
+            login({ email: response.email, role: response.role, firstName }, response.accessToken);
+            toast.success(`Welcome back, ${firstName}!`);
 
             switch (response.role) {
                 case 'STUDENT':
@@ -62,7 +65,7 @@ export const LoginPage: React.FC = () => {
                 <div className="relative z-10 flex flex-col justify-between p-12 w-full">
                     {/* Logo */}
                     <div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Connectra</h1>
+                        <img src={logoWhite} alt="Connectra" className="h-10" />
                     </div>
 
                     {/* Welcome Text */}
@@ -84,7 +87,7 @@ export const LoginPage: React.FC = () => {
                 <div className="w-full max-w-md">
                     {/* Mobile Logo */}
                     <div className="lg:hidden text-center mb-8">
-                        <h1 className="text-2xl font-bold text-slate-800">Connectra</h1>
+                        <img src={logo} alt="Connectra" className="h-10 mx-auto" />
                     </div>
 
                     {/* Form Header */}
@@ -102,7 +105,7 @@ export const LoginPage: React.FC = () => {
                             </label>
                             <input
                                 type="email"
-                                placeholder="name@university.edu"
+                                placeholder="example@uwu.ac.lk"
                                 className={`w-full px-4 py-3 rounded-lg border bg-white text-slate-800 placeholder:text-slate-400 outline-none transition-all ${errors.email
                                         ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
                                         : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'

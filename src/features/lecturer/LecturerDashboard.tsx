@@ -116,7 +116,7 @@ export const LecturerDashboard: React.FC = () => {
         return (
             <div
                 key={meeting.meetingId}
-                className="bg-background-card rounded-xl border border-white/5 p-5 hover:border-primary/30 transition-all group"
+                className="bg-background-card rounded-xl border border-primary/30 p-5 hover:border-primary/50 transition-all group"
             >
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4 mb-4">
@@ -221,8 +221,7 @@ export const LecturerDashboard: React.FC = () => {
     return (
         <div className="min-h-screen">
             <TopHeader
-                title="Dashboard"
-                subtitle={user?.email}
+                title={"Hi, " + user?.firstName}
                 onRefresh={() => fetchMeetings(true)}
                 isRefreshing={isRefreshing}
                 actions={
