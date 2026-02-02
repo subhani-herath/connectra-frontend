@@ -42,7 +42,7 @@ const formatTime = (dateString: string): string => {
 };
 
 export const AttendanceHistoryPage: React.FC = () => {
-    const { user } = useAuthStore();
+    const { user: _user } = useAuthStore();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);

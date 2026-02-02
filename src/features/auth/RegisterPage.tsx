@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
 import logoWhite from '../../assets/logo-white.png';
 import logo from '../../assets/logo.png';
+import heroBg from '../../../public/hero-bg.png';
 
 interface RegisterFormData {
     firstName: string;
@@ -55,7 +56,7 @@ export const RegisterPage: React.FC = () => {
                 {/* Background Image */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(/hero-bg.png)' }}
+                    style={{ backgroundImage: `url(${heroBg})` }}
                 />
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-transparent" />

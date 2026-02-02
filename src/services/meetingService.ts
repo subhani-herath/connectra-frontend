@@ -53,7 +53,10 @@ export interface AttendanceEntry {
     studentId: number;
     studentName: string;
     studentEmail: string;
+    studenEnrollmentId: string;
+    attendanceStatus: 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
     status: 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
+    durationMinutes?: number;
     joinedAt?: string;
     leftAt?: string;
 }
@@ -61,11 +64,19 @@ export interface AttendanceEntry {
 export interface AttendanceReport {
     meetingId: string;
     meetingTitle: string;
+    topic: string;
+    lecturerName: string;
+    degree: string;
+    batch: number;
+    durationMinutes: number;
     totalStudents: number;
     presentCount: number;
     absentCount: number;
     partialCount: number;
     entries: AttendanceEntry[];
+    presentStudents: AttendanceEntry[];
+    partiallyAttendedStudents: AttendanceEntry[];
+    absentStudents: AttendanceEntry[];
 }
 
 export const meetingService = {
