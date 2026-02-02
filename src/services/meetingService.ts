@@ -38,8 +38,8 @@ export interface JoinMeetingResponse {
     channelName: string;
     agoraToken: string;
     uid: number;
-    isHost?: boolean;
-    userName?: string;
+    userName: string;
+    isHost: boolean;
 }
 
 export interface UpdateMeetingRequest {
@@ -53,7 +53,10 @@ export interface AttendanceEntry {
     studentId: number;
     studentName: string;
     studentEmail: string;
+    studenEnrollmentId: string;
+    attendanceStatus: 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
     status: 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
+    durationMinutes?: number;
     joinedAt?: string;
     leftAt?: string;
 }
@@ -61,11 +64,19 @@ export interface AttendanceEntry {
 export interface AttendanceReport {
     meetingId: string;
     meetingTitle: string;
+    topic: string;
+    lecturerName: string;
+    degree: string;
+    batch: number;
+    durationMinutes: number;
     totalStudents: number;
     presentCount: number;
     absentCount: number;
     partialCount: number;
     entries: AttendanceEntry[];
+    presentStudents: AttendanceEntry[];
+    partiallyAttendedStudents: AttendanceEntry[];
+    absentStudents: AttendanceEntry[];
 }
 
 export const meetingService = {
@@ -140,4 +151,18 @@ export const meetingService = {
         );
         return response.data.data;
     },
+
+    getParticipants: async (meetingId: string): Promise<Participant[]> => {
+        const response = await axiosInstance.get<ApiResponse<Participant[]>>(
+            `/api/meeting/${meetingId}/participants`
+        );
+        return response.data.data;
+    },
 };
+
+// Participant info for name sync
+export interface Participant {
+    agoraUid: number;
+    displayName: string;
+    isHost: boolean;
+}

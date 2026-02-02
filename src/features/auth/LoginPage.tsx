@@ -7,6 +7,7 @@ import { authService, type LoginRequest } from '../../services/authService';
 import { useAuthStore } from '../../stores/authStore';
 import logoWhite from '../../assets/logo-white.png';
 import logo from '../../assets/logo.png';
+import heroBg from '../../../public/hero-bg.png';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -56,7 +57,7 @@ export const LoginPage: React.FC = () => {
                 {/* Background Image */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(/hero-bg.png)' }}
+                    style={{ backgroundImage: `url(${heroBg})` }}
                 />
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-transparent" />
@@ -107,8 +108,8 @@ export const LoginPage: React.FC = () => {
                                 type="email"
                                 placeholder="example@uwu.ac.lk"
                                 className={`w-full px-4 py-3 rounded-lg border bg-white text-slate-800 placeholder:text-slate-400 outline-none transition-all ${errors.email
-                                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                        : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+                                    ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                    : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
                                     }`}
                                 {...register('email', { required: 'Email is required' })}
                             />
@@ -127,8 +128,8 @@ export const LoginPage: React.FC = () => {
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Enter your password"
                                     className={`w-full px-4 py-3 pr-12 rounded-lg border bg-white text-slate-800 placeholder:text-slate-400 outline-none transition-all ${errors.password
-                                            ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
-                                            : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
+                                        ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                                        : 'border-slate-300 focus:border-teal-600 focus:ring-2 focus:ring-teal-100'
                                         }`}
                                     {...register('password', { required: 'Password is required' })}
                                 />

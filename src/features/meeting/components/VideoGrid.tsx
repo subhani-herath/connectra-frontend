@@ -89,7 +89,6 @@ const VideoTile: React.FC<{ participant: Participant; className?: string }> = ({
 export const VideoGrid: React.FC<VideoGridProps> = ({
     participants,
     localVideoTrack,
-    isScreenSharing = false,
 }) => {
     const count = participants.length;
 
