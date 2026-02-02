@@ -68,6 +68,12 @@ export interface AttendanceReport {
     entries: AttendanceEntry[];
 }
 
+export interface Participant {
+    agoraUid: number;
+    displayName: string;
+    host: boolean;
+}
+
 export const meetingService = {
     // Student endpoints
     getStudentMeetings: async (): Promise<Meeting[]> => {
@@ -137,6 +143,13 @@ export const meetingService = {
     getAttendanceReport: async (meetingId: string): Promise<AttendanceReport> => {
         const response = await axiosInstance.get<ApiResponse<AttendanceReport>>(
             `/api/meeting/${meetingId}/attendance`
+        );
+        return response.data.data;
+    },
+
+    getActiveParticipants: async (meetingId: string): Promise<Participant[]> => {
+        const response = await axiosInstance.get<ApiResponse<Participant[]>>(
+            `/api/meeting/${meetingId}/participants`
         );
         return response.data.data;
     },

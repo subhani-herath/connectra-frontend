@@ -10,6 +10,10 @@ import { VideoGrid } from './components/VideoGrid';
 import { ScreenShareLayout } from './components/ScreenShareLayout';
 import { Controls } from './components/Controls';
 import { ScreenPicker } from './components/ScreenPicker';
+import { LiveChatPanel } from './components/LiveChatPanel';
+import { RaiseHandPanel } from './components/RaiseHandPanel';
+import { ParticipantList } from './components/ParticipantList';
+
 import { QuizPanel } from '../lecturer/components/QuizPanel';
 import { QuizOverlay } from '../student/components/QuizOverlay';
 
@@ -23,6 +27,11 @@ export const MeetingRoom: React.FC = () => {
     const [showScreenPicker, setShowScreenPicker] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [sidebarTab, setSidebarTab] = useState<'info' | 'quiz'>('info');
+    const [hasRaisedHand, setHasRaisedHand] = useState(false);
+    const [showChatModal, setShowChatModal] = useState(false);
+    const [showHandModal, setShowHandModal] = useState(false);
+    const [isMutedAll, setIsMutedAll] = useState(false);
+    const [backendParticipants, setBackendParticipants] = useState<Map<number, { displayName: string; host: boolean }>>(new Map());
 
     // meetingId is already a string (UUID)
     const isLecturer = user?.role === 'LECTURER';
@@ -44,11 +53,17 @@ export const MeetingRoom: React.FC = () => {
         leave,
     } = useAgora(meetingId || '');
 
-    // RTM for real-time participant info sync
+    // RTM for real-time features
     const {
         isConnected: rtmConnected,
         participants: rtmParticipants,
         broadcastParticipantInfo,
+        chatMessages,
+        sendChatMessage,
+        handRaises,
+        raiseHand,
+        lowerHand,
+        notifyMuteAll,
     } = useAgoraRTM(meetingId || '');
 
     // Fetch meeting details
@@ -93,6 +108,35 @@ export const MeetingRoom: React.FC = () => {
         recordAttendance();
     }, [isJoined, meetingId, isLecturer]);
 
+    // Fetch backend participants for real names
+    useEffect(() => {
+        if (!meeting?.status || meeting.status !== 'LIVE' || !meetingId) return;
+
+        const fetchBackendParticipants = async () => {
+            try {
+                const participants = await meetingService.getActiveParticipants(meetingId);
+                const participantMap = new Map();
+                participants.forEach((p) => {
+                    participantMap.set(p.agoraUid, {
+                        displayName: p.displayName,
+                        host: p.host,
+                    });
+                });
+                setBackendParticipants(participantMap);
+            } catch (error) {
+                console.error('Failed to fetch backend participants:', error);
+            }
+        };
+
+        // Initial fetch
+        fetchBackendParticipants();
+
+        // Poll every 2 seconds for real-time updates
+        const interval = setInterval(fetchBackendParticipants, 2000);
+
+        return () => clearInterval(interval);
+    }, [meeting?.status, meetingId]);
+
     // Poll meeting status for students - detect when lecturer ends the meeting
     useEffect(() => {
         if (!isJoined || !meetingId || isLecturer) return;
@@ -136,6 +180,21 @@ export const MeetingRoom: React.FC = () => {
         }
     }, [isJoined, rtmConnected, isLecturer, user?.firstName, user?.email, userName, broadcastParticipantInfo]);
 
+    // Sync remote users to RTM participants map for name display
+    useEffect(() => {
+        if (!isJoined) return;
+
+        remoteUsers.forEach((remoteUser) => {
+            const uid = typeof remoteUser.uid === 'string' ? parseInt(remoteUser.uid, 10) : remoteUser.uid;
+            // Try to get their name from RTM if already broadcasted
+            if (!rtmParticipants.has(uid)) {
+                // Add a placeholder until they broadcast their info
+                // In a real implementation, this would be handled by RTM channel messages
+                console.log(`Remote user ${uid} joined - waiting for RTM broadcast`);
+            }
+        });
+    }, [remoteUsers, rtmParticipants, isJoined]);
+
     const formatTime = (seconds: number): string => {
         const hrs = Math.floor(seconds / 3600);
         const mins = Math.floor((seconds % 3600) / 60);
@@ -144,6 +203,30 @@ export const MeetingRoom: React.FC = () => {
             return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Feature handlers
+    const handleRaiseHand = () => {
+        if (!hasRaisedHand) {
+            raiseHand(0, userName);
+            setHasRaisedHand(true);
+            toast.success('Hand raised!');
+        }
+    };
+
+    const handleLowerHand = (uid: number) => {
+        lowerHand(uid);
+        if (uid === 0) setHasRaisedHand(false);
+    };
+
+    const handleSendMessage = (message: string) => {
+        sendChatMessage(0, userName, message);
+    };
+
+    const handleMuteAll = () => {
+        setIsMutedAll(!isMutedAll);
+        notifyMuteAll(user?.firstName || userName);
+        toast.success(isMutedAll ? 'All participants unmuted' : 'All participants muted');
     };
 
     const handleLeave = async () => {
@@ -173,15 +256,22 @@ export const MeetingRoom: React.FC = () => {
         await startScreenShare(sourceId);
     };
 
-    // Build participants list - uses RTM for real names, with fallback to generic names
+    // Build participants list - uses backend for real names
     const getParticipantDisplayName = (uid: number | string, remoteIndex: number = 0): string => {
-        // Try to get real name from RTM participants map
         const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
-        const participantInfo = rtmParticipants.get(numericUid);
+        
+        // First priority: Get from backend participants
+        const backendParticipant = backendParticipants.get(numericUid);
+        if (backendParticipant) {
+            const suffix = backendParticipant.host ? ' (Host)' : '';
+            return `${backendParticipant.displayName}${suffix}`;
+        }
 
-        if (participantInfo) {
-            const suffix = participantInfo.isHost ? ' (Host)' : '';
-            return `${participantInfo.displayName}${suffix}`;
+        // Second priority: Try to get real name from RTM participants map
+        const rtmParticipant = rtmParticipants.get(numericUid);
+        if (rtmParticipant && rtmParticipant.displayName) {
+            const suffix = rtmParticipant.isHost ? ' (Host)' : '';
+            return `${rtmParticipant.displayName}${suffix}`;
         }
 
         // Fallback when RTM is unavailable - check if it's the lecturer for students
@@ -189,18 +279,29 @@ export const MeetingRoom: React.FC = () => {
             // First remote user is the lecturer
             return `${meeting?.createdByName || 'Lecturer'} (Host)`;
         }
-        
-        // For other participants, try to show something meaningful
-        // This will show generic names only as last resort
+
+        // Generic fallback
         return `Participant ${remoteIndex + 1}`;
     };
 
     const participants = [
         {
             uid: 0,
-            name: isLecturer
-                ? `${userName} (Host)`
-                : userName,
+            name: (() => {
+                // Try to get from backend first
+                const backendLocal = backendParticipants.get(0);
+                if (backendLocal) {
+                    const suffix = backendLocal.host ? ' (Host)' : ' (you)';
+                    return `${backendLocal.displayName}${suffix}`;
+                }
+                
+                // Fallback to auth user
+                const fullName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || userName;
+                if (isLecturer) {
+                    return `${fullName} (Host)`;
+                }
+                return `${fullName} (you)`;
+            })(),
             hasVideo: !isCamOff || isScreenSharing,
             hasAudio: !isMicMuted,
             isLocal: true,
@@ -218,9 +319,13 @@ export const MeetingRoom: React.FC = () => {
         }),
     ];
 
+    // Check if anyone (including remote users) is screen sharing
+    const anyoneIsScreenSharing = isScreenSharing || 
+        Array.from(rtmParticipants.values()).some(p => p.isScreenSharing);
+
     // Determine if screen sharing layout should be used
-    // Use it when local user is sharing, or when there are multiple participants (professional presentation view)
-    const shouldUseScreenShareLayout = participants.length > 2 || isScreenSharing;
+    // Use it when anyone is sharing screen
+    const shouldUseScreenShareLayout = anyoneIsScreenSharing;
 
     // Loading state
     if (meetingLoading || agoraLoading) {
@@ -292,7 +397,7 @@ export const MeetingRoom: React.FC = () => {
                         <ScreenShareLayout
                             participants={participants}
                             localVideoTrack={localVideoTrack}
-                            isScreenSharing={isScreenSharing}
+                            isScreenSharing={anyoneIsScreenSharing}
                         />
                     ) : (
                         <VideoGrid
@@ -316,10 +421,10 @@ export const MeetingRoom: React.FC = () => {
                 {showSidebar && (
                     <aside className="w-80 bg-background-card border-l border-white/5 flex flex-col">
                         {/* Sidebar Tabs */}
-                        <div className="flex border-b border-white/5">
+                        <div className="flex border-b border-white/5 overflow-x-auto">
                             <button
                                 onClick={() => setSidebarTab('info')}
-                                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${sidebarTab === 'info'
+                                className={`flex-1 min-w-fit flex items-center justify-center gap-1 py-3 px-2 text-xs font-medium transition-colors ${sidebarTab === 'info'
                                     ? 'text-primary border-b-2 border-primary'
                                     : 'text-text-secondary hover:text-text-primary'
                                     }`}
@@ -330,7 +435,7 @@ export const MeetingRoom: React.FC = () => {
                             {isLecturer && (
                                 <button
                                     onClick={() => setSidebarTab('quiz')}
-                                    className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${sidebarTab === 'quiz'
+                                    className={`flex-1 min-w-fit flex items-center justify-center gap-1 py-3 px-2 text-xs font-medium transition-colors ${sidebarTab === 'quiz'
                                         ? 'text-primary border-b-2 border-primary'
                                         : 'text-text-secondary hover:text-text-primary'
                                         }`}
@@ -382,23 +487,8 @@ export const MeetingRoom: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Participants */}
-                                    <div className="bg-background-surface rounded-xl p-4">
-                                        <h3 className="font-semibold text-text-primary mb-3">
-                                            Participants ({participants.length})
-                                        </h3>
-                                        <div className="space-y-2">
-                                            {participants.map((p) => (
-                                                <div key={p.uid} className="flex items-center gap-2 text-sm">
-                                                    <div className={`w-2 h-2 rounded-full ${p.hasVideo ? 'bg-status-success' : 'bg-text-muted'}`} />
-                                                    <span className="text-text-primary">
-                                                        {p.name}
-                                                        {p.isLocal && ' (You)'}
-                                                    </span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    {/* Participants List - Real-time */}
+                                    <ParticipantList meetingId={meetingId || ''} isLive={meeting?.status === 'LIVE'} currentUserUid={0} />
                                 </div>
                             )}
 
@@ -414,18 +504,76 @@ export const MeetingRoom: React.FC = () => {
             </div>
 
             {/* Controls */}
-            <footer className="p-6 flex justify-center">
+            <footer className="p-6">
                 <Controls
                     isMicMuted={isMicMuted}
                     isCamOff={isCamOff}
                     isScreenSharing={isScreenSharing}
                     showScreenShare={true}
+                    isMutedAll={isMutedAll}
+                    isLecturer={isLecturer}
+                    unreadChat={chatMessages.length}
+                    raisedHandsCount={handRaises.size}
                     onToggleMic={toggleMic}
                     onToggleCam={toggleCam}
                     onToggleScreenShare={handleToggleScreenShare}
+                    onMuteAll={isLecturer ? handleMuteAll : undefined}
+                    onOpenChat={() => setShowChatModal(true)}
+                    onOpenHand={() => setShowHandModal(true)}
                     onLeave={handleLeave}
                 />
             </footer>
+
+            {/* Chat Modal */}
+            {showChatModal && (
+                <div className="fixed bottom-24 right-6 w-96 h-96 bg-background-card rounded-2xl border border-white/5 flex flex-col shadow-2xl z-50">
+                    <div className="flex items-center justify-between p-4 border-b border-white/5">
+                        <h3 className="font-semibold text-text-primary">Live Chat</h3>
+                        <button
+                            onClick={() => setShowChatModal(false)}
+                            className="text-text-secondary hover:text-text-primary"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                        <LiveChatPanel
+                            messages={chatMessages}
+                            onSendMessage={handleSendMessage}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Hand Raise Modal */}
+            {showHandModal && (
+                <div className="fixed bottom-24 right-6 w-96 max-h-96 bg-background-card rounded-2xl border border-white/5 overflow-auto shadow-2xl z-50">
+                    <div className="flex items-center justify-between p-4 border-b border-white/5 sticky top-0 bg-background-card">
+                        <h3 className="font-semibold text-text-primary">Raise Hand</h3>
+                        <button
+                            onClick={() => setShowHandModal(false)}
+                            className="text-text-secondary hover:text-text-primary"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    <div className="p-4">
+                        <RaiseHandPanel
+                            handRaises={handRaises}
+                            isLecturer={isLecturer}
+                            onRaiseHand={handleRaiseHand}
+                            onLowerHand={handleLowerHand}
+                            hasRaisedHand={hasRaisedHand}
+                        />
+                    </div>
+                </div>
+            )}
+
+
+            {/* Polls Modal - REMOVED */}
+
+            {/* Reactions Modal */}
+
 
             {/* Screen Picker Modal */}
             <ScreenPicker

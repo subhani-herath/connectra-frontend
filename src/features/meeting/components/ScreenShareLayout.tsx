@@ -77,10 +77,6 @@ export const ScreenShareLayout: React.FC<ScreenShareLayoutProps> = ({
     participants,
     localVideoTrack,
 }) => {
-    // Find who is screen sharing (usually has highest uid or isScreenShare flag)
-    // For now, we'll show the first person and others as thumbnails
-    const otherParticipants = participants.slice(1);
-
     // Inject local video track into local participant
     const participantsWithTracks = participants.map((p) => {
         if (p.isLocal && localVideoTrack) {
