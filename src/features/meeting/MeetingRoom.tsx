@@ -36,6 +36,7 @@ export const MeetingRoom: React.FC = () => {
         isMicMuted,
         isCamOff,
         isScreenSharing,
+        remoteScreenSharer,
         toggleMic,
         toggleCam,
         startScreenShare,
@@ -294,11 +295,12 @@ export const MeetingRoom: React.FC = () => {
             <div className="flex-1 flex overflow-hidden">
                 {/* Video Grid or Screen Share Layout */}
                 <main className={`flex-1 overflow-auto transition-all ${showSidebar ? 'mr-0' : ''}`}>
-                    {isScreenSharing ? (
+                    {isScreenSharing || remoteScreenSharer ? (
                         <ScreenShareLayout
                             participants={participants}
                             localVideoTrack={localVideoTrack}
                             isScreenSharing={isScreenSharing}
+                            remoteScreenSharer={remoteScreenSharer}
                         />
                     ) : (
                         <VideoGrid

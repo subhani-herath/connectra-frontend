@@ -23,6 +23,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
     const [isMicMuted, setIsMicMuted] = useState(false);
     const [isCamOff, setIsCamOff] = useState(false);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [remoteScreenSharer, setRemoteScreenSharer] = useState<RemoteUser | null>(null);
 
     // Refs for Agora resources
     const clientRef = useRef<IAgoraRTCClient | null>(null);
@@ -98,6 +99,25 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                         await client.subscribe(user, mediaType);
                         console.log('Subscribed to user:', user.uid, mediaType);
 
+                        // Detect if this is a screen share by checking video track properties
+                        let isScreenShare = false;
+                        if (mediaType === 'video' && user.videoTrack) {
+                            // Check the media stream track's content hint or settings
+                            const mediaStreamTrack = user.videoTrack.getMediaStreamTrack();
+                            if (mediaStreamTrack) {
+                                const settings = mediaStreamTrack.getSettings();
+                                // Screen shares typically have higher resolution and different aspect ratio
+                                // Also check content hint if available
+                                const contentHint = (mediaStreamTrack as MediaStreamTrack & { contentHint?: string }).contentHint;
+                                isScreenShare = contentHint === 'detail' || 
+                                    contentHint === 'text' ||
+                                    (settings.width && settings.height && 
+                                     (settings.width > 1280 || settings.height > 720 || 
+                                      (settings.width / settings.height > 1.5)));
+                                console.log('Video track settings:', settings, 'contentHint:', contentHint, 'isScreenShare:', isScreenShare);
+                            }
+                        }
+
                         setRemoteUsers((prev) => {
                             const existing = prev.find((u) => u.uid === user.uid);
                             if (existing) {
@@ -109,6 +129,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                                             hasAudio: mediaType === 'audio' ? true : u.hasAudio,
                                             videoTrack: mediaType === 'video' ? user.videoTrack : u.videoTrack,
                                             audioTrack: mediaType === 'audio' ? user.audioTrack : u.audioTrack,
+                                            isScreenSharing: mediaType === 'video' ? isScreenShare : u.isScreenSharing,
                                         }
                                         : u
                                 );
@@ -121,9 +142,21 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                                     hasAudio: mediaType === 'audio',
                                     videoTrack: user.videoTrack,
                                     audioTrack: user.audioTrack,
+                                    isScreenSharing: mediaType === 'video' ? isScreenShare : false,
                                 },
                             ];
                         });
+
+                        // Update remote screen sharer state
+                        if (mediaType === 'video' && isScreenShare) {
+                            setRemoteScreenSharer({
+                                uid: user.uid,
+                                hasVideo: true,
+                                hasAudio: false,
+                                videoTrack: user.videoTrack,
+                                isScreenSharing: true,
+                            });
+                        }
 
                         // Auto-play remote audio
                         if (mediaType === 'audio' && user.audioTrack) {
@@ -136,6 +169,14 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
 
                 client.on('user-unpublished', (user, mediaType) => {
                     console.log('User unpublished:', user.uid, mediaType);
+                    
+                    // Clear remote screen sharer if this user was sharing screen
+                    if (mediaType === 'video') {
+                        setRemoteScreenSharer((prev) => 
+                            prev && prev.uid === user.uid ? null : prev
+                        );
+                    }
+                    
                     setRemoteUsers((prev) =>
                         prev.map((u) =>
                             u.uid === user.uid
@@ -145,6 +186,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                                     hasAudio: mediaType === 'audio' ? false : u.hasAudio,
                                     videoTrack: mediaType === 'video' ? undefined : u.videoTrack,
                                     audioTrack: mediaType === 'audio' ? undefined : u.audioTrack,
+                                    isScreenSharing: mediaType === 'video' ? false : u.isScreenSharing,
                                 }
                                 : u
                         )
@@ -424,6 +466,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
         isMicMuted,
         isCamOff,
         isScreenSharing,
+        remoteScreenSharer,
         toggleMic,
         toggleCam,
         startScreenShare,
