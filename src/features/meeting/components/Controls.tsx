@@ -48,7 +48,7 @@ export const Controls: React.FC<ControlsProps> = ({
                 {isCamOff ? <VideoOff size={24} /> : <Video size={24} />}
             </button>
 
-            {/* Screen Share (Lecturer only) */}
+            {/* Screen Share */}
             {showScreenShare && onToggleScreenShare && (
                 <button
                     onClick={onToggleScreenShare}
