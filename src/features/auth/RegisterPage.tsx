@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { authService } from '../../services/authService';
 import logoWhite from '../../assets/logo-white.png';
 import logo from '../../assets/logo.png';
+import heroBg from '../../../public/hero-bg.png';
 
 interface RegisterFormData {
     firstName: string;
@@ -34,10 +35,11 @@ export const RegisterPage: React.FC = () => {
     const onSubmit = async (data: RegisterFormData) => {
         setIsLoading(true);
         try {
-            await authService.register(data);
+            const response = await authService.register(data);
 
-            toast.success('Account created! Please login.');
-            navigate('/login');
+            toast.success('Registration successful! Please verify your email.');
+            // Navigate to OTP verification page with email in state
+            navigate('/verify-email', { state: { email: response.email } });
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { message?: string } } };
             toast.error(axiosError.response?.data?.message || 'Registration failed');
@@ -55,7 +57,7 @@ export const RegisterPage: React.FC = () => {
                 {/* Background Image */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: 'url(/hero-bg.png)' }}
+                    style={{ backgroundImage: `url(${heroBg})` }}
                 />
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-slate-800/60 to-transparent" />

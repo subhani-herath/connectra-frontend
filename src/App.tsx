@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
+import { OtpVerificationPage } from './features/auth/OtpVerificationPage';
 import { StudentDashboard } from './features/student/StudentDashboard';
 import { AttendanceHistoryPage } from './features/student/AttendanceHistoryPage';
 import { LecturerDashboard } from './features/lecturer/LecturerDashboard';
@@ -73,6 +74,7 @@ function App() {
         {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/verify-email" element={<OtpVerificationPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* Student Routes with Layout */}

@@ -42,7 +42,7 @@ const formatTime = (dateString: string): string => {
 };
 
 export const AttendanceHistoryPage: React.FC = () => {
-    const { user } = useAuthStore();
+    const { user: _user } = useAuthStore();
     const [records, setRecords] = useState<AttendanceRecord[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -69,9 +69,9 @@ export const AttendanceHistoryPage: React.FC = () => {
         fetchAttendance();
     }, [filterStatus]);
 
-    const presentCount = records.filter((r) => r.status === 'PRESENT').length;
-    const absentCount = records.filter((r) => r.status === 'ABSENT').length;
-    const partialCount = records.filter((r) => r.status === 'PARTIALLY_PRESENT').length;
+    const presentCount = records.filter((r) => r.attendanceStatus === 'PRESENT').length;
+    const absentCount = records.filter((r) => r.attendanceStatus === 'ABSENT').length;
+    const partialCount = records.filter((r) => r.attendanceStatus === 'PARTIALLY_PRESENT').length;
     const attendanceRate = records.length > 0
         ? Math.round(((presentCount + partialCount) / records.length) * 100)
         : 0;
@@ -137,7 +137,7 @@ export const AttendanceHistoryPage: React.FC = () => {
                 ) : (
                     <div className="space-y-3">
                         {records.map((record) => {
-                            const status = statusConfig[record.status] || {
+                            const status = statusConfig[record.attendanceStatus] || {
                                 label: 'Unknown',
                                 icon: <AlertCircle size={16} />,
                                 className: 'bg-gray-100 text-gray-700 border-gray-300',
@@ -159,12 +159,12 @@ export const AttendanceHistoryPage: React.FC = () => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5">
                                                     <Calendar size={14} className="text-gray-400" />
-                                                    <span>{formatDate(record.scheduledStartTime)}</span>
+                                                    <span>{formatDate(record.meetingDate)}</span>
                                                 </div>
-                                                {record.actualStartTime && (
+                                                {record.joinedAt && (
                                                     <div className="flex items-center gap-1.5">
                                                         <Clock size={14} className="text-gray-400" />
-                                                        <span>{formatTime(record.actualStartTime)}</span>
+                                                        <span>Joined: {formatTime(record.joinedAt)}</span>
                                                     </div>
                                                 )}
                                             </div>

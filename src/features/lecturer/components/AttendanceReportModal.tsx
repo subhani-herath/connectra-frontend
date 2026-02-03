@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import { X, Loader2, CheckCircle, XCircle, AlertCircle, Users, Clock, Mail, Download } from 'lucide-react';
+import { X, Loader2, CheckCircle, XCircle, AlertCircle, Users, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-    meetingService,
-    type AttendanceReport,
-    type AttendanceEntry,
-} from '../../../services/meetingService';
+import { meetingService, type AttendanceReport } from '../../../services/meetingService';
 
 interface AttendanceReportModalProps {
     meetingId: string;
@@ -14,43 +10,18 @@ interface AttendanceReportModalProps {
     onClose: () => void;
 }
 
-const statusConfig: Record<AttendanceEntry['status'], { label: string; icon: React.ReactNode; className: string }> = {
-    PRESENT: {
-        label: 'Present',
-        icon: <CheckCircle size={14} />,
-        className: 'text-green-700 bg-green-100',
-    },
-    ABSENT: {
-        label: 'Absent',
-        icon: <XCircle size={14} />,
-        className: 'text-red-700 bg-red-100',
-    },
-    PARTIALLY_PRESENT: {
-        label: 'Partial',
-        icon: <AlertCircle size={14} />,
-        className: 'text-yellow-700 bg-yellow-100',
-    },
-};
 
-const formatTime = (dateString?: string): string => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
-};
 
 const generateCSV = (report: any): string => {
     const headers = ['Student ID', 'Student Name', 'Status', 'Duration (Minutes)'];
-    
+
     // Combine all students from the actual backend response
     const allStudents = [
         ...(report.presentStudents || []),
         ...(report.partiallyAttendedStudents || []),
         ...(report.absentStudents || []),
     ];
-    
+
     const rows = allStudents.map((entry: any) => [
         entry.studenEnrollmentId,
         entry.studentName,

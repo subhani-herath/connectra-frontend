@@ -11,13 +11,14 @@ export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'PARTIALLY_PRESENT';
 export interface AttendanceRecord {
     meetingId: string;
     meetingTitle: string;
+    meetingDate: string;
     lecturerName: string;
-    scheduledStartTime: string;
-    actualStartTime?: string;
-    actualEndTime?: string;
-    status: AttendanceStatus;
     joinedAt?: string;
     leftAt?: string;
+    totalTimeInMinutes?: number;
+    attendancePercentage?: number;
+    attendanceStatus: AttendanceStatus;
+    meetingDuration?: number;
 }
 
 export const studentService = {

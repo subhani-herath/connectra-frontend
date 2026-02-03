@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { User, MicOff, VideoOff } from 'lucide-react';
-import type { ICameraVideoTrack, IRemoteVideoTrack, ILocalVideoTrack } from '../../../types/agora.types';
+import { User, MicOff, VideoOff, Monitor } from 'lucide-react';
+import type { ICameraVideoTrack, IRemoteVideoTrack, ILocalVideoTrack, RemoteUser } from '../../../types/agora.types';
 
 interface Participant {
     uid: number | string;
@@ -9,12 +9,14 @@ interface Participant {
     hasAudio: boolean;
     isLocal?: boolean;
     videoTrack?: ICameraVideoTrack | IRemoteVideoTrack | ILocalVideoTrack;
+    isScreenSharing?: boolean;
 }
 
 interface ScreenShareLayoutProps {
     participants: Participant[];
     localVideoTrack?: ICameraVideoTrack | ILocalVideoTrack | null;
     isScreenSharing?: boolean;
+    remoteScreenSharer?: RemoteUser | null;
 }
 
 const ParticipantThumb: React.FC<{ participant: Participant }> = ({ participant }) => {
@@ -77,10 +79,6 @@ export const ScreenShareLayout: React.FC<ScreenShareLayoutProps> = ({
     participants,
     localVideoTrack,
 }) => {
-    // Find who is screen sharing (usually has highest uid or isScreenShare flag)
-    // For now, we'll show the first person and others as thumbnails
-    const otherParticipants = participants.slice(1);
-
     // Inject local video track into local participant
     const participantsWithTracks = participants.map((p) => {
         if (p.isLocal && localVideoTrack) {

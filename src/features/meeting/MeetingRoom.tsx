@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Users, Loader2, AlertTriangle, Info, ClipboardList, ChevronRight, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAgora } from '../../hooks/useAgora';
+import { useAgoraRTM } from '../../hooks/useAgoraRTM';
 import { useAuthStore } from '../../stores/authStore';
 import { meetingService, type Meeting, type Participant } from '../../services/meetingService';
 import { VideoGrid } from './components/VideoGrid';
@@ -22,10 +23,15 @@ export const MeetingRoom: React.FC = () => {
     const [showScreenPicker, setShowScreenPicker] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
     const [sidebarTab, setSidebarTab] = useState<'info' | 'quiz'>('info');
+    const [isMutedByHost, setIsMutedByHost] = useState(false);
+    const prevMuteTimestampRef = useRef<number | null>(null);
 
     // meetingId is already a string (UUID)
     const isLecturer = user?.role === 'LECTURER';
     const userName = user?.email?.split('@')[0] || 'You';
+
+    // RTM for cross-machine mute all
+    const { muteAllState, broadcastMuteAll } = useAgoraRTM(meetingId || '', user?.id?.toString());
 
     const {
         isJoined,
@@ -36,6 +42,7 @@ export const MeetingRoom: React.FC = () => {
         isMicMuted,
         isCamOff,
         isScreenSharing,
+        remoteScreenSharer,
         toggleMic,
         toggleCam,
         startScreenShare,
@@ -182,6 +189,41 @@ export const MeetingRoom: React.FC = () => {
         await startScreenShare(sourceId);
     };
 
+    // Listen for mute all commands from RTM (for students)
+    useEffect(() => {
+        if (!muteAllState || isLecturer) return;
+        
+        // Check if this is a new mute command (different timestamp)
+        if (prevMuteTimestampRef.current === muteAllState.timestamp) return;
+        prevMuteTimestampRef.current = muteAllState.timestamp;
+
+        setIsMutedByHost(muteAllState.isMuted);
+
+        if (muteAllState.isMuted) {
+            // Mute own microphone when host mutes all
+            if (!isMicMuted) {
+                toggleMic();
+            }
+            toast(`${muteAllState.mutedBy} has muted all participants`, { icon: '🔇' });
+        } else {
+            toast(`${muteAllState.mutedBy} has allowed unmute`, { icon: '🔊' });
+        }
+    }, [muteAllState, isLecturer, isMicMuted, toggleMic]);
+
+    // Mute/unmute all participants (lecturer broadcasts via RTM)
+    const handleMuteAll = () => {
+        const newMuteState = !(muteAllState?.isMuted ?? false);
+
+        // Broadcast mute all state to all participants via RTM
+        const lecturerName = currentUserInfo?.userName || userName;
+        broadcastMuteAll(newMuteState, lecturerName);
+
+        toast.success(newMuteState ? 'Mute all sent to participants' : 'Unmute sent to participants');
+    };
+
+    // Check if mute all is active (for UI)
+    const isAllMuted = muteAllState?.isMuted ?? false;
+
     // Build participants list - uses backend API for real names, with fallback to generic names
     const getParticipantDisplayName = (uid: number | string, remoteIndex: number = 0): string => {
         // Try to get real name from backend participants
@@ -294,11 +336,12 @@ export const MeetingRoom: React.FC = () => {
             <div className="flex-1 flex overflow-hidden">
                 {/* Video Grid or Screen Share Layout */}
                 <main className={`flex-1 overflow-auto transition-all ${showSidebar ? 'mr-0' : ''}`}>
-                    {isScreenSharing ? (
+                    {isScreenSharing || remoteScreenSharer ? (
                         <ScreenShareLayout
                             participants={participants}
                             localVideoTrack={localVideoTrack}
                             isScreenSharing={isScreenSharing}
+                            remoteScreenSharer={remoteScreenSharer}
                         />
                     ) : (
                         <VideoGrid
@@ -426,9 +469,13 @@ export const MeetingRoom: React.FC = () => {
                     isCamOff={isCamOff}
                     isScreenSharing={isScreenSharing}
                     showScreenShare={true}
+                    isLecturer={isLecturer}
+                    isAllMuted={isAllMuted}
+                    isMutedByHost={isMutedByHost}
                     onToggleMic={toggleMic}
                     onToggleCam={toggleCam}
                     onToggleScreenShare={handleToggleScreenShare}
+                    onMuteAll={handleMuteAll}
                     onLeave={handleLeave}
                 />
             </footer>

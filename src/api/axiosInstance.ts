@@ -4,7 +4,7 @@ import { useAuthStore } from '../stores/authStore';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // Paths that should not trigger token refresh
-const AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh-token'];
+const AUTH_PATHS = ['/api/auth/login', '/api/auth/register', '/api/auth/refresh-token', '/api/auth/verify-email', '/api/auth/resend-otp'];
 
 export const axiosInstance = axios.create({
     baseURL: API_BASE_URL,

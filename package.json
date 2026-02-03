@@ -14,9 +14,15 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "electron:dev": "vite",
-    "electron:build": "npm run build && electron-builder --config electron-builder.yml"
+    "electron:build": "npm run build && electron-builder --config electron-builder.yml",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux",
+    "build:all": "npm run build && electron-builder --win --mac --linux"
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "^4.21.0",
+    "agora-rtm-sdk": "^2.2.3-1",
     "axios": "^1.9.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.511.0",
@@ -26,7 +32,6 @@
     "react-hot-toast": "^2.5.2",
     "react-router-dom": "^7.6.1",
     "tailwind-merge": "^3.3.0",
-    "agora-rtc-sdk-ng": "^4.21.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {

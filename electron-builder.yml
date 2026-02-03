@@ -10,32 +10,64 @@ files:
   - dist/**/*
   - dist-electron/**/*
 
+# Windows Configuration
 win:
   target:
+    - target: nsis
+      arch:
+        - x64
     - target: portable
       arch:
         - x64
-  artifactName: ${productName}-${version}-Portable.${ext}
+  icon: build/icon.ico
+  artifactName: ${productName}-${version}-Windows-${arch}.${ext}
 
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   deleteAppDataOnUninstall: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Connectra
 
+# macOS Configuration
 mac:
   target:
     - target: dmg
       arch:
         - x64
         - arm64
-  artifactName: ${productName}-${version}.${ext}
+  icon: build/icon.icns
+  artifactName: ${productName}-${version}-macOS-${arch}.${ext}
   category: public.app-category.education
 
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# Linux Configuration
 linux:
   target:
     - target: AppImage
       arch:
         - x64
-  artifactName: ${productName}-${version}.${ext}
+  icon: build/icon.png
+  artifactName: ${productName}-${version}-Linux-${arch}.${ext}
   category: Education
+  description: Connectra - University Online Meeting Platform
+
+# Publish to GitHub (optional - for auto-upload)
+publish:
+  provider: github
+  owner: subhani-herath
+  repo: connectra-frontend
+  releaseType: release
