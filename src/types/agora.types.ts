@@ -26,6 +26,7 @@ export interface RemoteUser {
     audioTrack?: IRemoteAudioTrack;
     userName?: string;
     isHost?: boolean;
+    isScreenSharing?: boolean;
 }
 
 export interface CurrentUserInfo {
@@ -44,6 +45,7 @@ export interface UseAgoraReturn {
     isMicMuted: boolean;
     isCamOff: boolean;
     isScreenSharing: boolean;
+    remoteScreenSharer: RemoteUser | null;
     toggleMic: () => Promise<void>;
     toggleCam: () => Promise<void>;
     startScreenShare: (sourceId?: string) => Promise<void>;
