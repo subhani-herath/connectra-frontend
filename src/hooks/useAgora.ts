@@ -100,7 +100,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                         console.log('Subscribed to user:', user.uid, mediaType);
 
                         // Detect if this is a screen share by checking video track properties
-                        let isScreenShare = false;
+                        let isScreenShare: boolean = false;
                         if (mediaType === 'video' && user.videoTrack) {
                             // Check the media stream track's content hint or settings
                             const mediaStreamTrack = user.videoTrack.getMediaStreamTrack();
@@ -111,7 +111,7 @@ export const useAgora = (meetingId: string): UseAgoraReturn => {
                                 const contentHint = (mediaStreamTrack as MediaStreamTrack & { contentHint?: string }).contentHint;
                                 isScreenShare = contentHint === 'detail' || 
                                     contentHint === 'text' ||
-                                    (settings.width && settings.height && 
+                                    Boolean(settings.width && settings.height && 
                                      (settings.width > 1280 || settings.height > 720 || 
                                       (settings.width / settings.height > 1.5)));
                                 console.log('Video track settings:', settings, 'contentHint:', contentHint, 'isScreenShare:', isScreenShare);

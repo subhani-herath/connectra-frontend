@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { User, MicOff, VideoOff, Monitor } from 'lucide-react';
+import { User, MicOff, VideoOff } from 'lucide-react';
 import type { ICameraVideoTrack, IRemoteVideoTrack, ILocalVideoTrack, RemoteUser } from '../../../types/agora.types';
 
 interface Participant {

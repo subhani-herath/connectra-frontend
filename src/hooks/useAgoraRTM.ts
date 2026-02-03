@@ -30,18 +30,19 @@ export const useAgoraRTM = (meetingId: string, uniqueUserId?: string) => {
     const [participants, setParticipants] = useState<Map<number, ParticipantInfo>>(new Map());
     const [muteAllState, setMuteAllState] = useState<MuteAllState | null>(null);
 
-    const rtmClientRef = useRef<AgoraRTM.RTM | null>(null);
+    const rtmClientRef = useRef<InstanceType<typeof AgoraRTM.RTM> | null>(null);
     const participantsRef = useRef<Map<number, ParticipantInfo>>(new Map());
     const isInitializedRef = useRef(false);
     const rtmUserIdRef = useRef<string>(uniqueUserId || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
     const channelNameRef = useRef<string>(`meeting_${meetingId}`);
 
     // Handle incoming messages
-    const handleMessage = useCallback((event: { channelType: string; channelName: string; publisher: string; message: string }) => {
+    const handleMessage = useCallback((event: { channelType: string; channelName: string; publisher: string; message: string | Uint8Array }) => {
         if (event.channelName !== channelNameRef.current) return;
 
         try {
-            const parsed: RTMMessage = JSON.parse(event.message);
+            const messageStr = typeof event.message === 'string' ? event.message : new TextDecoder().decode(event.message);
+            const parsed: RTMMessage = JSON.parse(messageStr);
             console.log('RTM message received from', event.publisher, ':', parsed);
 
             if (parsed.type === 'MUTE_ALL') {
