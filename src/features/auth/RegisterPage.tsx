@@ -35,10 +35,11 @@ export const RegisterPage: React.FC = () => {
     const onSubmit = async (data: RegisterFormData) => {
         setIsLoading(true);
         try {
-            await authService.register(data);
+            const response = await authService.register(data);
 
-            toast.success('Account created! Please login.');
-            navigate('/login');
+            toast.success('Registration successful! Please verify your email.');
+            // Navigate to OTP verification page with email in state
+            navigate('/verify-email', { state: { email: response.email } });
         } catch (error: unknown) {
             const axiosError = error as { response?: { data?: { message?: string } } };
             toast.error(axiosError.response?.data?.message || 'Registration failed');
