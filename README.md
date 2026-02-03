@@ -1,4 +1,4 @@
-# Connectra - Virtual Classroom Platform
+# Connectra- The University Online Meeting Platform
 
 A modern virtual classroom application built for Uva Wellassa University, enabling lecturers and students to conduct and attend online meetings with real-time video conferencing, quizzes, and attendance tracking.
 
