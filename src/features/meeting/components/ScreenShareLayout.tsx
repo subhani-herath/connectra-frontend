@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { User, MicOff, VideoOff } from 'lucide-react';
-import type { ICameraVideoTrack, IRemoteVideoTrack, ILocalVideoTrack } from '../../../types/agora.types';
+import { User, MicOff, VideoOff, Monitor } from 'lucide-react';
+import type { ICameraVideoTrack, IRemoteVideoTrack, ILocalVideoTrack, RemoteUser } from '../../../types/agora.types';
 
 interface Participant {
     uid: number | string;
@@ -9,13 +9,14 @@ interface Participant {
     hasAudio: boolean;
     isLocal?: boolean;
     videoTrack?: ICameraVideoTrack | IRemoteVideoTrack | ILocalVideoTrack;
+    isScreenSharing?: boolean;
 }
 
 interface ScreenShareLayoutProps {
     participants: Participant[];
     localVideoTrack?: ICameraVideoTrack | ILocalVideoTrack | null;
     isScreenSharing?: boolean;
-    remoteScreenSharer?: { uid: number | string; videoTrack?: IRemoteVideoTrack } | null;
+    remoteScreenSharer?: RemoteUser | null;
 }
 
 const ParticipantThumb: React.FC<{ participant: Participant }> = ({ participant }) => {
@@ -77,7 +78,6 @@ const ParticipantThumb: React.FC<{ participant: Participant }> = ({ participant 
 export const ScreenShareLayout: React.FC<ScreenShareLayoutProps> = ({
     participants,
     localVideoTrack,
-    remoteScreenSharer: _remoteScreenSharer,
 }) => {
     // Inject local video track into local participant
     const participantsWithTracks = participants.map((p) => {

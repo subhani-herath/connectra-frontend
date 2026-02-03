@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import AgoraRTM from 'agora-rtm-sdk';
+
+// Use the same App ID as the RTC SDK
+const APP_ID = import.meta.env.VITE_AGORA_APP_ID || '82fa855761c14d5eafb7f8cfece45c74';
 
 export interface ParticipantInfo {
     displayName: string;
@@ -12,65 +16,121 @@ export interface MuteAllState {
     mutedBy: string;
 }
 
+interface RTMMessage {
+    type: 'MUTE_ALL' | 'PARTICIPANT_INFO';
+    payload: MuteAllState | ParticipantInfo;
+}
+
 /**
  * Custom hook for Agora RTM (Real-Time Messaging) integration
- * Used to sync participant information across the meeting
- * 
- * Note: For now, this is a placeholder that uses local storage
- * RTM requires proper token setup in the backend
+ * Uses Agora RTM SDK v2 API
  */
-export const useAgoraRTM = (meetingId: string, _uniqueUserId?: string) => {
+export const useAgoraRTM = (meetingId: string, uniqueUserId?: string) => {
     const [isConnected, setIsConnected] = useState(false);
     const [participants, setParticipants] = useState<Map<number, ParticipantInfo>>(new Map());
     const [muteAllState, setMuteAllState] = useState<MuteAllState | null>(null);
-    
+
+    const rtmClientRef = useRef<AgoraRTM.RTM | null>(null);
     const participantsRef = useRef<Map<number, ParticipantInfo>>(new Map());
     const isInitializedRef = useRef(false);
+    const rtmUserIdRef = useRef<string>(uniqueUserId || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    const channelNameRef = useRef<string>(`meeting_${meetingId}`);
 
-    // Connect to RTM (using local state for now)
+    // Handle incoming messages
+    const handleMessage = useCallback((event: { channelType: string; channelName: string; publisher: string; message: string }) => {
+        if (event.channelName !== channelNameRef.current) return;
+
+        try {
+            const parsed: RTMMessage = JSON.parse(event.message);
+            console.log('RTM message received from', event.publisher, ':', parsed);
+
+            if (parsed.type === 'MUTE_ALL') {
+                const state = parsed.payload as MuteAllState;
+                setMuteAllState(state);
+            } else if (parsed.type === 'PARTICIPANT_INFO') {
+                const info = parsed.payload as ParticipantInfo;
+                participantsRef.current.set(info.uid, info);
+                setParticipants(new Map(participantsRef.current));
+            }
+        } catch (error) {
+            console.warn('Failed to parse RTM message:', error);
+        }
+    }, []);
+
+    // Connect to RTM
     useEffect(() => {
         if (isInitializedRef.current || !meetingId) return;
         isInitializedRef.current = true;
 
-        try {
-            console.log('RTM initialized for meeting:', meetingId);
-            setIsConnected(true);
-        } catch (error) {
-            console.warn('RTM initialization failed:', error);
-            setIsConnected(false);
-        }
+        const initRTM = async () => {
+            try {
+                // Create RTM client (v2 API)
+                const rtmClient = new AgoraRTM.RTM(APP_ID, rtmUserIdRef.current);
+                rtmClientRef.current = rtmClient;
+
+                // Set up event listeners
+                rtmClient.addEventListener('message', handleMessage);
+
+                // Login to RTM
+                await rtmClient.login();
+                console.log('RTM logged in as:', rtmUserIdRef.current);
+
+                // Subscribe to channel
+                await rtmClient.subscribe(channelNameRef.current);
+                console.log('RTM subscribed to channel:', channelNameRef.current);
+
+                setIsConnected(true);
+            } catch (error) {
+                console.warn('RTM initialization failed:', error);
+                setIsConnected(false);
+            }
+        };
+
+        initRTM();
 
         return () => {
-            // Cleanup
+            // Cleanup on unmount
+            const cleanup = async () => {
+                try {
+                    if (rtmClientRef.current) {
+                        await rtmClientRef.current.unsubscribe(channelNameRef.current);
+                        await rtmClientRef.current.logout();
+                        rtmClientRef.current.removeEventListener('message', handleMessage);
+                    }
+                } catch (error) {
+                    console.debug('RTM cleanup error:', error);
+                }
+            };
+            cleanup();
             participantsRef.current.clear();
+            isInitializedRef.current = false;
         };
-    }, [meetingId]);
+    }, [meetingId, handleMessage]);
 
     // Broadcast participant info
     const broadcastParticipantInfo = useCallback(
         async (uid: number, isHost: boolean, displayName: string = '') => {
-            if (!isConnected) return;
+            if (!isConnected || !rtmClientRef.current) return;
 
             try {
-                const message = {
-                    type: 'PARTICIPANT_INFO',
+                const info: ParticipantInfo = {
                     uid,
-                    isHost,
                     displayName: displayName || (isHost ? 'Lecturer' : `Participant ${uid}`),
-                    timestamp: Date.now(),
+                    isHost,
                 };
 
-                // Store in local ref
-                participantsRef.current.set(uid, {
-                    uid,
-                    displayName: message.displayName,
-                    isHost,
-                });
+                const message: RTMMessage = {
+                    type: 'PARTICIPANT_INFO',
+                    payload: info,
+                };
 
-                // Update state
+                await rtmClientRef.current.publish(channelNameRef.current, JSON.stringify(message));
+
+                // Also store locally
+                participantsRef.current.set(uid, info);
                 setParticipants(new Map(participantsRef.current));
 
-                console.log('Broadcasted participant info:', message);
+                console.log('Broadcasted participant info:', info);
             } catch (error) {
                 console.warn('Failed to broadcast participant info:', error);
             }
@@ -78,10 +138,10 @@ export const useAgoraRTM = (meetingId: string, _uniqueUserId?: string) => {
         [isConnected]
     );
 
-    // Broadcast mute all state
+    // Broadcast mute all command (lecturer only)
     const broadcastMuteAll = useCallback(
         async (isMuted: boolean, mutedBy: string) => {
-            if (!isConnected) return;
+            if (!isConnected || !rtmClientRef.current) return;
 
             try {
                 const state: MuteAllState = {
@@ -89,7 +149,17 @@ export const useAgoraRTM = (meetingId: string, _uniqueUserId?: string) => {
                     timestamp: Date.now(),
                     mutedBy,
                 };
+
+                const message: RTMMessage = {
+                    type: 'MUTE_ALL',
+                    payload: state,
+                };
+
+                await rtmClientRef.current.publish(channelNameRef.current, JSON.stringify(message));
+
+                // Also update local state
                 setMuteAllState(state);
+
                 console.log('Broadcasted mute all:', state);
             } catch (error) {
                 console.warn('Failed to broadcast mute all:', error);
@@ -98,11 +168,17 @@ export const useAgoraRTM = (meetingId: string, _uniqueUserId?: string) => {
         [isConnected]
     );
 
+    // Clear mute all state
+    const clearMuteAllState = useCallback(() => {
+        setMuteAllState(null);
+    }, []);
+
     return {
         isConnected,
         participants,
-        broadcastParticipantInfo,
         muteAllState,
+        broadcastParticipantInfo,
         broadcastMuteAll,
+        clearMuteAllState,
     };
 };
